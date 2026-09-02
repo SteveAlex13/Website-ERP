@@ -1,0 +1,238 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] {
+    display: none !important;
+}
+
+.app-content {
+    min-width: 0;
+}
+
+.sidebar-toggle-icon {
+    display: flex;
+    width: 1.125rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+}
+
+.sidebar-toggle-icon > span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+@media (min-width: 1024px) {
+    .app-shell[data-sidebar-open='true'] .app-content { padding-left: 16rem; }
+    .app-shell[data-sidebar-open='false'] .app-content { padding-left: 0; }
+    .app-shell[data-sidebar-open='true'] .sidebar-toggle { left: 13.5rem; }
+    .app-shell[data-sidebar-open='false'] .sidebar-toggle { left: 1rem; }
+    .app-shell[data-sidebar-open='true'] header > div { padding-left: 2rem !important; }
+    .app-shell[data-sidebar-open='false'] header > div { padding-left: 5rem !important; }
+}
+
+aside nav {
+    scrollbar-color: #1d4ed8 #020617;
+    scrollbar-width: thin;
+}
+
+aside nav::-webkit-scrollbar { width: 6px; }
+aside nav::-webkit-scrollbar-track { background: #020617; }
+aside nav::-webkit-scrollbar-thumb { border-radius: 999px; background: #1d4ed8; }
+
+body header button span > small {
+    display: none;
+}
+
+aside > div:last-child {
+    font-size: 0;
+}
+
+aside > div:last-child::after {
+    content: 'Dagang ERP - Internal System';
+    font-size: 0.75rem;
+}
+
+.dashboard-theme {
+    width: 100%;
+    max-width: none;
+}
+
+.dashboard-metrics {
+    align-items: stretch;
+}
+
+@layer base {
+    body {
+        @apply bg-slate-100 text-slate-800;
+    }
+
+    main {
+        @apply min-h-[calc(100vh-5rem)] bg-slate-100;
+        background-image: radial-gradient(circle at top right, rgb(224 231 255 / 0.65), transparent 28rem);
+    }
+
+    main h1,
+    main h2,
+    main h3 {
+        @apply tracking-tight text-slate-900;
+    }
+
+    main input,
+    main select,
+    main textarea {
+        @apply border-slate-300 bg-white text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500;
+    }
+
+    main table {
+        @apply w-full border-separate border-spacing-0;
+    }
+
+    main th {
+        @apply border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500;
+    }
+
+    main td {
+        @apply border-b border-slate-100 px-4 py-3 text-slate-700;
+    }
+
+    main tbody tr {
+        @apply transition hover:bg-indigo-50/60;
+    }
+}
+
+@layer components {
+    .erp-panel {
+        @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+    }
+
+    .erp-form {
+        @apply rounded-2xl border border-slate-200 bg-white p-6 shadow-sm;
+    }
+
+    .erp-btn-primary {
+        @apply inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2;
+    }
+
+    .erp-btn-secondary {
+        @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50;
+    }
+
+    .erp-badge {
+        @apply inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold capitalize text-indigo-700;
+    }
+}
+
+body,
+body > div {
+    background: #050816 !important;
+    color: #dbeafe;
+}
+
+body header {
+    height: 5rem;
+    border-bottom: 1px solid #172554;
+    background: #111827 !important;
+    color: #eff6ff;
+    box-shadow: none !important;
+}
+
+body header > div {
+    display: flex;
+    height: 5rem;
+    max-width: none !important;
+    align-items: center;
+    padding-left: 5rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+body header > div > div {
+    width: 100%;
+}
+
+.sidebar-toggle {
+    top: 1.25rem !important;
+}
+
+body header h2 {
+    color: #eff6ff !important;
+}
+
+main {
+    background-color: #050816;
+    background-image: radial-gradient(circle at top right, rgb(29 78 216 / 0.22), transparent 32rem);
+    color: #dbeafe;
+}
+
+main .bg-white,
+main .erp-panel,
+main .erp-form {
+    border-color: #1e3a8a !important;
+    background-color: #0f172a !important;
+    color: #dbeafe !important;
+}
+
+main .text-gray-500,
+main .text-slate-500,
+main label {
+    color: #93c5fd !important;
+}
+
+main h1,
+main h2,
+main h3,
+main b,
+main .text-gray-700,
+main .text-gray-800,
+main .text-slate-700,
+main .text-slate-900 {
+    color: #eff6ff !important;
+}
+
+main input,
+main select,
+main textarea {
+    border-color: #1e3a8a !important;
+    background-color: #111c33 !important;
+    color: #e0f2fe !important;
+}
+
+main th {
+    border-color: #1e3a8a !important;
+    background: #111c33 !important;
+    color: #93c5fd !important;
+}
+
+main td,
+main tbody tr,
+main .border-b,
+main .border-t {
+    border-color: #172554 !important;
+    color: #dbeafe !important;
+}
+
+main tbody tr:hover {
+    background: rgb(30 64 175 / 0.18) !important;
+}
+
+.dashboard-metrics > * {
+    min-height: 7.5rem;
+    border: 1px solid #2563eb;
+    background: linear-gradient(135deg, #1d4ed8, #2563eb 52%, #3b82f6) !important;
+    color: white !important;
+    box-shadow: 0 18px 40px rgb(2 6 23 / 0.35);
+}
+
+.dashboard-metrics > * span,
+.dashboard-metrics > * b {
+    color: white !important;
+}
+
+.dashboard-theme ~ .py-12 {
+    display: none;
+}
