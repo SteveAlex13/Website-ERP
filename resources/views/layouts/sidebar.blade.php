@@ -30,7 +30,27 @@
         @endphp
         @foreach($links as [$routeName,$label,$caption])
             @if($routeName === 'contacts-menu')
-                <div class='rounded-xl border border-slate-800 bg-slate-900/60 p-2'><div class='px-2 py-2'><b class='block text-white'>Kontak</b><small class='text-slate-400'>Pilih jenis kontak</small></div><div class='grid gap-1'><a href='{{ route('contacts.index', ['type' => 'customer']) }}' class='rounded-lg px-3 py-2 {{ request('type') === 'customer' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800' }}'>Customer</a><a href='{{ route('contacts.index', ['type' => 'supplier']) }}' class='rounded-lg px-3 py-2 {{ request('type') === 'supplier' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800' }}'>Supplier</a></div></div>
+                <div x-data="{ open: {{ request()->routeIs('contacts.*') ? 'true' : 'false' }} }" class="rounded-xl border border-slate-800/80 bg-slate-900/50 transition">
+                    <button type="button" @click="open = !open" class="flex w-full items-center justify-between px-4 py-3 text-left transition rounded-xl hover:bg-slate-800/70 {{ request()->routeIs('contacts.*') ? 'text-white' : 'text-slate-300' }}">
+                        <div>
+                            <b class="block leading-tight">Kontak</b>
+                            <small class="text-xs text-slate-400">Customer &amp; Supplier</small>
+                        </div>
+                        <svg class="h-4 w-4 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180 text-indigo-400': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1" class="flex flex-col gap-1 px-2 pb-2 pt-1 border-t border-slate-800/60">
+                        <a href="{{ route('contacts.index', ['type' => 'customer']) }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition {{ request()->routeIs('contacts.*') && request('type', 'customer') === 'customer' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                            <span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('contacts.*') && request('type', 'customer') === 'customer' ? 'bg-white' : 'bg-slate-500' }}"></span>
+                            Customer
+                        </a>
+                        <a href="{{ route('contacts.index', ['type' => 'supplier']) }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition {{ request()->routeIs('contacts.*') && request('type') === 'supplier' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                            <span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('contacts.*') && request('type') === 'supplier' ? 'bg-white' : 'bg-slate-500' }}"></span>
+                            Supplier
+                        </a>
+                    </div>
+                </div>
                 @continue
             @endif
             <a href='{{ route($routeName) }}' class='rounded-xl px-4 py-3 transition {{ request()->routeIs($routeName) ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}'><b class='block'>{{ $label }}</b><small class='text-slate-400'>{{ $caption }}</small></a>
