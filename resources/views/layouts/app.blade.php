@@ -41,5 +41,6 @@
         </div>
     </div>
 </div>
+<x-toast-notification />
 </body>
 </html>

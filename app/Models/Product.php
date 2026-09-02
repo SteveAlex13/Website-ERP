@@ -29,6 +29,13 @@ class Product extends Model
         return (float) $this->stock <= (float) $this->minimum_stock;
     }
 
+    public function formattedStock(): string
+    {
+        return (float) $this->stock == (int) $this->stock
+            ? number_format((float) $this->stock, 0, ',', '.')
+            : number_format((float) $this->stock, 2, ',', '.');
+    }
+
     public function inventoryBatches(): HasMany
     {
         return $this->hasMany(InventoryBatch::class);

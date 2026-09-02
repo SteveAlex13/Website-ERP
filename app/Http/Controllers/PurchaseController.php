@@ -20,10 +20,18 @@ class PurchaseController extends Controller
         $perPage = in_array(request()->integer('per_page'), [10, 25, 50], true) ? request()->integer('per_page') : 10;
         $purchases = Purchase::query()->select(['id', 'number', 'supplier_id', 'date', 'status', 'total'])
             ->with('supplier:id,name')
+            ->withCount('items')
             ->when(request('search'), fn ($query, $search) => $query->where('number', 'like', '%'.$search.'%'))
             ->latest()->paginate($perPage)->withQueryString();
 
-        return view('purchases.index', compact('purchases'));
+        $stockInHistory = \App\Models\InventoryBatch::query()
+            ->with(['product:id,name,sku,unit', 'supplier:id,name', 'purchaseItem.purchase:id,number'])
+            ->latest('received_at')
+            ->latest('id')
+            ->paginate(10, ['*'], 'history_page')
+            ->withQueryString();
+
+        return view('purchases.index', compact('purchases', 'stockInHistory'));
     }
 
     /**

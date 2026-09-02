@@ -20,12 +20,61 @@ class SaleController extends Controller
     {
         $this->authorize('viewAny', Sale::class);
         $perPage = in_array(request()->integer('per_page'), [10, 25, 50], true) ? request()->integer('per_page') : 10;
-        $sales = Sale::query()->select(['id', 'number', 'customer_id', 'date', 'document_type', 'status', 'total', 'paid_amount'])
-            ->with('customer:id,name')
+        
+        $sales = Sale::query()
+            ->with(['customer:id,name', 'items.deliveryOrderItems'])
             ->when(request('search'), fn ($query, $search) => $query->where('number', 'like', '%'.$search.'%'))
-            ->latest()->paginate($perPage)->withQueryString();
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
 
-        return view('sales.index', compact('sales'));
+        $deliveryOrders = \App\Models\DeliveryOrder::query()
+            ->with(['sale.customer:id,name', 'items.saleItem.product:id,name,unit'])
+            ->latest('date')
+            ->latest('id')
+            ->paginate($perPage, ['*'], 'do_page')
+            ->withQueryString();
+
+        $invoices = Sale::query()
+            ->with(['customer:id,name', 'bankAccount:id,name'])
+            ->latest('date')
+            ->paginate($perPage, ['*'], 'inv_page')
+            ->withQueryString();
+
+        $salesReturns = \App\Models\ProductReturn::query()
+            ->where('type', 'sale')
+            ->with(['items.product:id,name,unit'])
+            ->latest('date')
+            ->paginate($perPage, ['*'], 'ret_page')
+            ->withQueryString();
+
+        $receivables = Sale::query()
+            ->whereColumn('paid_amount', '<', 'total')
+            ->with('customer:id,name')
+            ->latest('date')
+            ->paginate($perPage, ['*'], 'rec_page')
+            ->withQueryString();
+
+        $activePoCount = Sale::query()->where('document_type', 'order')->whereIn('status', ['open', 'partial'])->count();
+        $partialDeliveryCount = Sale::query()->where('status', 'partial')->count();
+        $totalReceivable = (float) (Sale::query()->selectRaw('COALESCE(SUM(total - paid_amount), 0) as aggregate')->value('aggregate') ?? 0);
+        $unpaidInvoiceCount = Sale::query()->whereColumn('paid_amount', '<', 'total')->count();
+        $totalSalesMonth = (float) Sale::query()->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()])->sum('total');
+        $commissionEstimate = $totalSalesMonth * 0.02; // 2% estimasi komisi periode
+
+        return view('sales.index', compact(
+            'sales',
+            'deliveryOrders',
+            'invoices',
+            'salesReturns',
+            'receivables',
+            'activePoCount',
+            'partialDeliveryCount',
+            'totalReceivable',
+            'unpaidInvoiceCount',
+            'totalSalesMonth',
+            'commissionEstimate'
+        ));
     }
 
     /**

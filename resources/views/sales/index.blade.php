@@ -1,1 +1,378 @@
-<x-app-layout><x-slot name='header'><h2 class='text-xl font-semibold'>Penjualan Harian</h2></x-slot><div class='mx-auto max-w-7xl p-4 sm:p-8'><div class='mb-6'><p class='text-sm text-blue-300'>Riwayat transaksi POS dan penjualan</p><h3 class='text-2xl font-bold'>Daftar Penjualan</h3></div><div class='overflow-hidden rounded-2xl border border-blue-900 bg-slate-900'><x-list-toolbar create-route='{{ route('sales.create') }}' create-label='Buka POS Kasir' placeholder='Cari nomor transaksi...'/><div class='overflow-x-auto'><table class='min-w-full text-sm'><thead class='bg-blue-950/70'><tr><th>No</th><th>Nomor</th><th>Tanggal</th><th>Customer</th><th>Jenis</th><th>Status</th><th>Total</th></tr></thead><tbody>@forelse($sales as $sale)<tr><td>{{ $sales->firstItem() + $loop->index }}</td><td><a class='font-semibold text-blue-300' href='{{ route('sales.show', $sale) }}'>{{ $sale->number }}</a></td><td>{{ $sale->date->format('d/m/Y') }}</td><td>{{ $sale->customer?->name ?? 'Umum' }}</td><td>{{ $sale->document_type === 'pos' ? 'POS Kasir' : strtoupper($sale->document_type) }}</td><td><span class='erp-badge'>{{ ucfirst($sale->status) }}</span></td><td>Rp {{ number_format((float) $sale->total, 0, ',', '.') }}</td></tr>@empty<tr><td colspan='7' class='py-12 text-center text-slate-400'>Penjualan tidak ditemukan.</td></tr>@endforelse</tbody></table></div></div><div class='mt-5'>{{ $sales->links() }}</div></div></x-app-layout>
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-blue-400">ERP Perusahaan Dagang</p>
+                <h2 class="text-2xl font-bold text-white">Penjualan</h2>
+                <p class="text-xs text-blue-300 mt-0.5">Quotation, PO, diskon, komisi, dan piutang customer.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('sales.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:bg-indigo-500">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    + Tambah Penjualan / POS
+                </a>
+            </div>
+        </div>
+    </x-slot>
+
+    <div x-data="{ tab: '{{ request('tab', 'orders') }}' }" class="mx-auto max-w-7xl space-y-6 p-4 sm:p-8">
+        
+        <!-- 5 TABS NAVIGATION -->
+        <div class="flex items-center gap-2 overflow-x-auto rounded-2xl border border-blue-900/60 bg-slate-900/90 p-1.5 shadow-xl text-xs font-bold">
+            <button type="button" @click="tab = 'orders'" :class="tab === 'orders' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'" class="flex items-center gap-2 rounded-xl px-4 py-2.5 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Quotation / PO
+            </button>
+            <button type="button" @click="tab = 'delivery'" :class="tab === 'delivery' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'" class="flex items-center gap-2 rounded-xl px-4 py-2.5 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                Delivery Order
+            </button>
+            <button type="button" @click="tab = 'invoice'" :class="tab === 'invoice' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'" class="flex items-center gap-2 rounded-xl px-4 py-2.5 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+                Invoice
+            </button>
+            <button type="button" @click="tab = 'retur'" :class="tab === 'retur' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'" class="flex items-center gap-2 rounded-xl px-4 py-2.5 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H4m0 0l3-3m-3 3l3 3m5 4v1a4 4 0 004 4h8m0 0l-3-3m3 3l-3 3"/></svg>
+                Retur
+            </button>
+            <button type="button" @click="tab = 'piutang'" :class="tab === 'piutang' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'" class="flex items-center gap-2 rounded-xl px-4 py-2.5 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Piutang
+            </button>
+        </div>
+
+        <!-- 4 KPI SUMMARY METRIC CARDS -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            
+            <!-- Card 1: PO Aktif -->
+            <div class="rounded-2xl border border-blue-900 bg-slate-900/90 p-5 shadow-xl transition hover:-translate-y-0.5">
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">PO Aktif</div>
+                <div class="mt-2 text-3xl font-extrabold text-white">{{ $activePoCount }}</div>
+                <div class="mt-1 flex items-center gap-1.5 text-xs text-blue-300">
+                    <span class="h-1.5 w-1.5 rounded-full bg-blue-400"></span>
+                    Order berjalan
+                </div>
+            </div>
+
+            <!-- Card 2: Pengiriman Parsial -->
+            <div class="rounded-2xl border border-blue-900 bg-slate-900/90 p-5 shadow-xl transition hover:-translate-y-0.5">
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pengiriman Parsial</div>
+                <div class="mt-2 text-3xl font-extrabold text-white">{{ $partialDeliveryCount }}</div>
+                <div class="mt-1 flex items-center gap-1.5 text-xs text-amber-400">
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
+                    Menunggu pengiriman
+                </div>
+            </div>
+
+            <!-- Card 3: Piutang Dagang -->
+            <div class="rounded-2xl border border-blue-900 bg-slate-900/90 p-5 shadow-xl transition hover:-translate-y-0.5">
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Piutang Dagang</div>
+                <div class="mt-2 text-3xl font-extrabold text-white">
+                    Rp {{ $totalReceivable >= 1000000 ? number_format($totalReceivable / 1000000, 1, ',', '.') . ' jt' : number_format($totalReceivable, 0, ',', '.') }}
+                </div>
+                <div class="mt-1 flex items-center gap-1.5 text-xs text-rose-400">
+                    <span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span>
+                    {{ $unpaidInvoiceCount }} invoice belum lunas
+                </div>
+            </div>
+
+            <!-- Card 4: Komisi Sales -->
+            <div class="rounded-2xl border border-blue-900 bg-slate-900/90 p-5 shadow-xl transition hover:-translate-y-0.5">
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Komisi Sales</div>
+                <div class="mt-2 text-3xl font-extrabold text-white">
+                    Rp {{ $commissionEstimate >= 1000000 ? number_format($commissionEstimate / 1000000, 1, ',', '.') . ' jt' : number_format($commissionEstimate, 0, ',', '.') }}
+                </div>
+                <div class="mt-1 flex items-center gap-1.5 text-xs text-emerald-400">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                    Periode {{ now()->translatedFormat('F') }}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= TAB 1: QUOTATION / PO ================= -->
+        <div x-show="tab === 'orders'" x-transition class="space-y-4">
+            <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
+                <x-list-toolbar :create-route="route('sales.create')" create-label="Tambah Penjualan" placeholder="Cari nomor dokumen..." />
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-blue-950/70 text-slate-300">
+                            <tr>
+                                <th class="px-4 py-3.5 text-left">No.</th>
+                                <th class="px-4 py-3.5 text-left">No. Dokumen</th>
+                                <th class="px-4 py-3.5 text-left">Customer</th>
+                                <th class="px-4 py-3.5 text-right">Nilai Total</th>
+                                <th class="px-4 py-3.5 text-center">Terkirim</th>
+                                <th class="px-4 py-3.5 text-center">Status</th>
+                                <th class="px-4 py-3.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-blue-950/60 text-slate-200">
+                            @forelse($sales as $sale)
+                                <tr class="hover:bg-blue-950/30 transition">
+                                    <td class="px-4 py-3.5 text-slate-400">{{ $sales->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3.5">
+                                        <b class="text-white">{{ $sale->number }}</b>
+                                        <small class="block text-xs text-blue-300">{{ $sale->date->format('d M Y') }}</small>
+                                    </td>
+                                    <td class="px-4 py-3.5 font-medium text-white">{{ $sale->customer?->name ?? 'Pelanggan Umum' }}</td>
+                                    <td class="px-4 py-3.5 text-right font-bold text-white">Rp {{ number_format((float) $sale->total, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <span class="inline-flex rounded-md bg-slate-950 px-2.5 py-1 text-xs font-bold {{ $sale->deliveryPercentage() == 100 ? 'text-emerald-400' : ($sale->deliveryPercentage() > 0 ? 'text-amber-400' : 'text-slate-400') }}">
+                                            {{ $sale->document_type === 'pos' ? '100%' : $sale->deliveryPercentage() . '%' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize {{ $sale->status === 'completed' ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-800/40' : ($sale->status === 'partial' ? 'bg-blue-900/60 text-blue-300 border border-blue-800/40' : 'bg-slate-800 text-slate-300 border border-slate-700/50') }}">
+                                            {{ ucfirst($sale->status) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <a href="{{ route('sales.show', $sale) }}" class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-600 transition">
+                                                Detail
+                                            </a>
+                                            <a href="{{ route('sales.invoice.print', $sale) }}" target="_blank" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition">
+                                                Cetak
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="py-12 text-center text-slate-400">Belum ada data Quotation / Sales Order.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>{{ $sales->links() }}</div>
+        </div>
+
+        <!-- ================= TAB 2: DELIVERY ORDER ================= -->
+        <div x-show="tab === 'delivery'" x-transition class="space-y-4">
+            <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
+                <div class="border-b border-blue-950 p-4 bg-slate-950/60 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Daftar Surat Jalan (Delivery Order)</h4>
+                        <p class="text-xs text-slate-400">Pengiriman barang parsial dan lengkap ke customer</p>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-blue-950/70 text-slate-300">
+                            <tr>
+                                <th class="px-4 py-3.5 text-left">No.</th>
+                                <th class="px-4 py-3.5 text-left">No. DO</th>
+                                <th class="px-4 py-3.5 text-left">Ref PO</th>
+                                <th class="px-4 py-3.5 text-left">Customer</th>
+                                <th class="px-4 py-3.5 text-left">Tanggal Kirim</th>
+                                <th class="px-4 py-3.5 text-center">Jumlah Item</th>
+                                <th class="px-4 py-3.5 text-center">Status</th>
+                                <th class="px-4 py-3.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-blue-950/60 text-slate-200">
+                            @forelse($deliveryOrders as $do)
+                                <tr class="hover:bg-blue-950/30 transition">
+                                    <td class="px-4 py-3.5 text-slate-400">{{ $deliveryOrders->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3.5 font-bold text-white">{{ $do->number }}</td>
+                                    <td class="px-4 py-3.5 font-semibold text-blue-300">
+                                        <a href="{{ route('sales.show', $do->sale) }}" class="hover:underline">{{ $do->sale?->number }}</a>
+                                    </td>
+                                    <td class="px-4 py-3.5 font-medium text-white">{{ $do->sale?->customer?->name ?? '-' }}</td>
+                                    <td class="px-4 py-3.5 text-slate-300">{{ $do->date->format('d/m/Y') }}</td>
+                                    <td class="px-4 py-3.5 text-center text-xs text-slate-300">{{ $do->items->count() }} item</td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <span class="inline-flex rounded-full bg-emerald-900/60 border border-emerald-800/40 px-2.5 py-0.5 text-xs font-semibold text-emerald-300 capitalize">
+                                            {{ $do->status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <a href="{{ route('delivery_orders.print', $do) }}" target="_blank" class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-600 transition">
+                                            Print DO
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="py-12 text-center text-slate-400">Belum ada pengiriman Delivery Order.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>{{ $deliveryOrders->links() }}</div>
+        </div>
+
+        <!-- ================= TAB 3: INVOICE ================= -->
+        <div x-show="tab === 'invoice'" x-transition class="space-y-4">
+            <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
+                <div class="border-b border-blue-950 p-4 bg-slate-950/60 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Daftar Tagihan &amp; Invoice</h4>
+                        <p class="text-xs text-slate-400">Faktur penagihan penjualan kepada customer</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-blue-950/70 text-slate-300">
+                            <tr>
+                                <th class="px-4 py-3.5 text-left">No.</th>
+                                <th class="px-4 py-3.5 text-left">No. Invoice</th>
+                                <th class="px-4 py-3.5 text-left">Customer</th>
+                                <th class="px-4 py-3.5 text-left">Tanggal</th>
+                                <th class="px-4 py-3.5 text-right">Total Tagihan</th>
+                                <th class="px-4 py-3.5 text-right">Sudah Dibayar</th>
+                                <th class="px-4 py-3.5 text-center">Status Bayar</th>
+                                <th class="px-4 py-3.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-blue-950/60 text-slate-200">
+                            @forelse($invoices as $inv)
+                                <tr class="hover:bg-blue-950/30 transition">
+                                    <td class="px-4 py-3.5 text-slate-400">{{ $invoices->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3.5 font-bold text-white">
+                                        <a href="{{ route('sales.show', $inv) }}" class="hover:underline text-blue-300">{{ $inv->number }}</a>
+                                    </td>
+                                    <td class="px-4 py-3.5 font-medium text-white">{{ $inv->customer?->name ?? 'Pelanggan Umum' }}</td>
+                                    <td class="px-4 py-3.5 text-slate-300">{{ $inv->date->format('d/m/Y') }}</td>
+                                    <td class="px-4 py-3.5 text-right font-bold text-white">Rp {{ number_format((float) $inv->total, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3.5 text-right font-semibold text-emerald-400">Rp {{ number_format((float) $inv->paid_amount, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize {{ (float)$inv->paid_amount >= (float)$inv->total ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-800/40' : ((float)$inv->paid_amount > 0 ? 'bg-amber-900/60 text-amber-300 border border-amber-800/40' : 'bg-rose-900/60 text-rose-300 border border-rose-800/40') }}">
+                                            {{ (float)$inv->paid_amount >= (float)$inv->total ? 'Lunas' : ((float)$inv->paid_amount > 0 ? 'Sebagian' : 'Belum Bayar') }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <a href="{{ route('sales.invoice.print', $inv) }}" target="_blank" class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-600 transition">
+                                            Cetak Invoice
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="py-12 text-center text-slate-400">Belum ada invoice penjualan.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>{{ $invoices->links() }}</div>
+        </div>
+
+        <!-- ================= TAB 4: RETUR ================= -->
+        <div x-show="tab === 'retur'" x-transition class="space-y-4">
+            <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
+                <div class="border-b border-blue-950 p-4 bg-slate-950/60 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Daftar Retur Penjualan</h4>
+                        <p class="text-xs text-slate-400">Pengembalian barang dari customer yang memotong piutang &amp; menambah stok kembali</p>
+                    </div>
+                    @if(in_array(auth()->user()->role, ['superadmin', 'admin', 'finance', 'warehouse']))
+                        <a href="{{ route('product-returns.create') }}" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-500 transition">
+                            + Tambah Retur
+                        </a>
+                    @endif
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-blue-950/70 text-slate-300">
+                            <tr>
+                                <th class="px-4 py-3.5 text-left">No.</th>
+                                <th class="px-4 py-3.5 text-left">No. Retur</th>
+                                <th class="px-4 py-3.5 text-left">Tanggal</th>
+                                <th class="px-4 py-3.5 text-center">Jumlah Item</th>
+                                <th class="px-4 py-3.5 text-right">Nilai Retur</th>
+                                <th class="px-4 py-3.5 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-blue-950/60 text-slate-200">
+                            @forelse($salesReturns as $ret)
+                                <tr class="hover:bg-blue-950/30 transition">
+                                    <td class="px-4 py-3.5 text-slate-400">{{ $salesReturns->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3.5 font-bold text-white">{{ $ret->number }}</td>
+                                    <td class="px-4 py-3.5 text-slate-300">{{ $ret->date->format('d/m/Y') }}</td>
+                                    <td class="px-4 py-3.5 text-center text-xs text-slate-300">{{ $ret->items->count() }} produk</td>
+                                    <td class="px-4 py-3.5 text-right font-bold text-rose-400">- Rp {{ number_format((float) $ret->total, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <span class="inline-flex rounded-full bg-emerald-900/60 border border-emerald-800/40 px-2.5 py-0.5 text-xs font-semibold text-emerald-300 capitalize">
+                                            {{ $ret->status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="py-12 text-center text-slate-400">Belum ada transaksi retur penjualan.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>{{ $salesReturns->links() }}</div>
+        </div>
+
+        <!-- ================= TAB 5: PIUTANG ================= -->
+        <div x-show="tab === 'piutang'" x-transition class="space-y-4">
+            <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
+                <div class="border-b border-blue-950 p-4 bg-slate-950/60 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Buku Piutang Dagang (Customer Receivables)</h4>
+                        <p class="text-xs text-slate-400">Daftar seluruh tagihan customer yang belum lunas</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-blue-950/70 text-slate-300">
+                            <tr>
+                                <th class="px-4 py-3.5 text-left">No.</th>
+                                <th class="px-4 py-3.5 text-left">No. Dokumen</th>
+                                <th class="px-4 py-3.5 text-left">Customer</th>
+                                <th class="px-4 py-3.5 text-right">Total Invoice</th>
+                                <th class="px-4 py-3.5 text-right">Sudah Dibayar</th>
+                                <th class="px-4 py-3.5 text-right">Sisa Piutang</th>
+                                <th class="px-4 py-3.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-blue-950/60 text-slate-200">
+                            @forelse($receivables as $rec)
+                                <tr class="hover:bg-blue-950/30 transition">
+                                    <td class="px-4 py-3.5 text-slate-400">{{ $receivables->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3.5 font-bold text-white">
+                                        <a href="{{ route('sales.show', $rec) }}" class="text-blue-300 hover:underline">{{ $rec->number }}</a>
+                                    </td>
+                                    <td class="px-4 py-3.5 font-medium text-white">{{ $rec->customer?->name ?? 'Pelanggan Umum' }}</td>
+                                    <td class="px-4 py-3.5 text-right text-slate-300">Rp {{ number_format((float) $rec->total, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3.5 text-right text-emerald-400">Rp {{ number_format((float) $rec->paid_amount, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3.5 text-right font-extrabold text-rose-400">Rp {{ number_format($rec->outstandingBalance(), 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <a href="{{ route('sales.show', $rec) }}" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition">
+                                            Bayar / Pelunasan
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="py-12 text-center text-slate-400">Semua piutang telah lunas! Tidak ada tagihan tertunggak.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>{{ $receivables->links() }}</div>
+        </div>
+
+    </div>
+</x-app-layout>
+
+

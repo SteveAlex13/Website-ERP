@@ -54,4 +54,15 @@ class Sale extends Model
     {
         return max(0, (float) $this->total - (float) $this->paid_amount);
     }
+
+    public function deliveryPercentage(): int
+    {
+        $totalQty = (float) $this->items->sum('quantity');
+        if ($totalQty <= 0) {
+            return $this->status === 'completed' ? 100 : 0;
+        }
+
+        $deliveredQty = (float) $this->items->sum(fn ($item) => (float) $item->deliveredQuantity());
+        return min(100, (int) round(($deliveredQty / $totalQty) * 100));
+    }
 }

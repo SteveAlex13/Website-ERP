@@ -41,7 +41,18 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request): RedirectResponse
     {
-        Product::create($request->validated());
+        $data = $request->validated();
+        $stock = (float) ($data['stock'] ?? 0);
+        $product = Product::create($data);
+
+        if ($stock > 0) {
+            $product->inventoryBatches()->create([
+                'received_at' => now()->toDateString(),
+                'initial_quantity' => $stock,
+                'remaining_quantity' => $stock,
+                'unit_cost' => $product->purchase_price,
+            ]);
+        }
 
         return to_route('products.index')->with('success', 'Produk berhasil ditambahkan.');
     }
