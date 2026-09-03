@@ -18,7 +18,11 @@ class CashExpenseController extends Controller
     public function index(): View
     {
         $period = in_array(request('period'), ['day', 'month', 'year'], true) ? request('period') : 'day';
-        $selectedDate = request()->date('date') ?? now();
+        $selectedDate = match ($period) {
+            'month' => request()->date('month', 'Y-m') ?? now(),
+            'year' => now()->setYear($this->selectedYear()),
+            default => request()->date('date') ?? now(),
+        };
         [$startDate, $endDate] = match ($period) {
             'month' => [$selectedDate->copy()->startOfMonth(), $selectedDate->copy()->endOfMonth()],
             'year' => [$selectedDate->copy()->startOfYear(), $selectedDate->copy()->endOfYear()],
@@ -106,5 +110,12 @@ class CashExpenseController extends Controller
         $cashExpense->delete();
 
         return to_route('cash-expenses.index')->with('success', 'Pengeluaran dihapus.');
+    }
+
+    private function selectedYear(): int
+    {
+        $year = request()->integer('year', now()->year);
+
+        return $year >= 2000 && $year <= now()->year + 1 ? $year : now()->year;
     }
 }

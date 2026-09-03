@@ -306,6 +306,8 @@ class ErpWorkflowTest extends TestCase
             'number' => 'EXP-TEST-001',
             'supplier_id' => $supplier->id,
             'date' => now()->toDateString(),
+            'purchase_type' => 'asset',
+            'document_type' => 'invoice',
             'description' => 'Kebutuhan ATK',
             'total' => 500000,
             'paid_amount' => 100000,
@@ -313,7 +315,57 @@ class ErpWorkflowTest extends TestCase
 
         $purchase = ExpensePurchase::query()->where('number', 'EXP-TEST-001')->firstOrFail();
         $this->assertSame('partial', $purchase->payment_status);
+        $this->assertSame('asset', $purchase->purchase_type);
+        $this->assertSame('invoice', $purchase->document_type);
         $this->assertSame(400000.0, $purchase->outstandingBalance());
+    }
+
+    public function test_purchase_list_can_be_filtered_by_purchase_and_document_type(): void
+    {
+        $finance = User::factory()->create(['role' => 'finance']);
+        ExpensePurchase::query()->create([
+            'number' => 'PB-ASSET-001',
+            'date' => '2026-09-03',
+            'purchase_type' => 'asset',
+            'document_type' => 'quotation_po',
+            'description' => 'Laptop kantor',
+            'total' => 15000000,
+        ]);
+        ExpensePurchase::query()->create([
+            'number' => 'PB-BARANG-001',
+            'date' => '2026-09-03',
+            'purchase_type' => 'barang',
+            'document_type' => 'invoice',
+            'description' => 'Kardus pengiriman',
+            'total' => 500000,
+        ]);
+
+        $this->actingAs($finance)
+            ->get(route('expense-purchases.index', ['purchase_type' => 'asset', 'document_type' => 'quotation_po']))
+            ->assertSee('Quotation / PO')
+            ->assertSee('Delivery Order')
+            ->assertSee('Invoice')
+            ->assertSee('Retur')
+            ->assertSee('Piutang')
+            ->assertSee('PB-ASSET-001')
+            ->assertDontSee('PB-BARANG-001');
+    }
+
+    public function test_purchase_rejects_unknown_purchase_and_document_types(): void
+    {
+        $finance = User::factory()->create(['role' => 'finance']);
+
+        $this->actingAs($finance)->post(route('expense-purchases.store'), [
+            'number' => 'PB-INVALID-001',
+            'date' => '2026-09-03',
+            'purchase_type' => 'produk_jadi',
+            'document_type' => 'surat_lain',
+            'description' => 'Data tidak valid',
+            'total' => 100000,
+            'paid_amount' => 0,
+        ])->assertInvalid(['purchase_type', 'document_type']);
+
+        $this->assertDatabaseMissing('expense_purchases', ['number' => 'PB-INVALID-001']);
     }
 
     public function test_point_of_sale_consumes_different_supplier_costs_in_fifo_order(): void

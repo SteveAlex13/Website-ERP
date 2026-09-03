@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Actions\CreateSale;
+use App\Http\Requests\DeleteQuotationRequest;
 use App\Http\Requests\StoreSaleRequest;
 use App\Models\BankAccount;
 use App\Models\Contact;
+use App\Models\DeliveryOrder;
 use App\Models\Product;
+use App\Models\ProductReturn;
 use App\Models\Sale;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -20,15 +23,24 @@ class SaleController extends Controller
     {
         $this->authorize('viewAny', Sale::class);
         $perPage = in_array(request()->integer('per_page'), [10, 25, 50], true) ? request()->integer('per_page') : 10;
-        
+
         $sales = Sale::query()
             ->with(['customer:id,name', 'items.deliveryOrderItems'])
+            ->whereIn('document_type', ['quotation', 'order'])
             ->when(request('search'), fn ($query, $search) => $query->where('number', 'like', '%'.$search.'%'))
             ->latest()
             ->paginate($perPage)
             ->withQueryString();
 
-        $deliveryOrders = \App\Models\DeliveryOrder::query()
+        $offlineSales = Sale::query()
+            ->with(['customer:id,name', 'salesUser:id,name'])
+            ->where('document_type', 'pos')
+            ->when(request('search'), fn ($query, $search) => $query->where('number', 'like', '%'.$search.'%'))
+            ->latest()
+            ->paginate($perPage, ['*'], 'offline_page')
+            ->withQueryString();
+
+        $deliveryOrders = DeliveryOrder::query()
             ->with(['sale.customer:id,name', 'items.saleItem.product:id,name,unit'])
             ->latest('date')
             ->latest('id')
@@ -37,11 +49,12 @@ class SaleController extends Controller
 
         $invoices = Sale::query()
             ->with(['customer:id,name', 'bankAccount:id,name'])
+            ->whereIn('document_type', ['quotation', 'order'])
             ->latest('date')
             ->paginate($perPage, ['*'], 'inv_page')
             ->withQueryString();
 
-        $salesReturns = \App\Models\ProductReturn::query()
+        $salesReturns = ProductReturn::query()
             ->where('type', 'sale')
             ->with(['items.product:id,name,unit'])
             ->latest('date')
@@ -64,6 +77,7 @@ class SaleController extends Controller
 
         return view('sales.index', compact(
             'sales',
+            'offlineSales',
             'deliveryOrders',
             'invoices',
             'salesReturns',
@@ -83,10 +97,15 @@ class SaleController extends Controller
     public function create(): View
     {
         $this->authorize('create', Sale::class);
+        $isOnline = request('mode') === 'online';
 
         return view('sales.form', [
+            'isOnline' => $isOnline,
             'customers' => Contact::customers()->orderBy('name')->get(['id', 'name']),
-            'bankAccounts' => BankAccount::query()->orderBy('name')->get(['id', 'name', 'account_number']),
+            'bankAccounts' => BankAccount::query()
+                ->whereIn('name', ['Tunai', 'Bank BCA', 'Bank BNI', 'Bank Mandiri'])
+                ->orderBy('name')
+                ->get(['id', 'name', 'account_number']),
             'openBills' => Sale::query()->where('document_type', 'pos')->where('status', 'open')->with('customer:id,name')->latest()->limit(10)->get(['id', 'number', 'bill_name', 'customer_id', 'total', 'created_at']),
             'products' => Product::query()
                 ->where('stock', '>', 0)
@@ -102,9 +121,15 @@ class SaleController extends Controller
     {
         $sale = $createSale->handle($request->validated());
 
-        return $sale->status === 'open'
-            ? to_route('sales.create')->with('success', 'Bill berhasil disimpan dan dapat dibayar nanti.')
-            : to_route('sales.show', $sale)->with('success', 'Transaksi penjualan berhasil disimpan.');
+        if ($sale->document_type === 'pos') {
+            $message = $sale->status === 'open'
+                ? 'Bill berhasil disimpan dan dapat dibayar nanti.'
+                : 'Transaksi penjualan offline berhasil disimpan.';
+
+            return to_route('sales.create')->with('success', $message);
+        }
+
+        return to_route('sales.show', $sale)->with('success', 'Transaksi penjualan online berhasil disimpan.');
     }
 
     /**
@@ -142,12 +167,12 @@ class SaleController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Sale $sale): RedirectResponse
+    public function destroy(DeleteQuotationRequest $request, Sale $sale): RedirectResponse
     {
-        $this->authorize('delete', $sale);
+        $request->validated();
         $sale->delete();
 
-        return to_route('sales.index')->with('success', 'Penjualan dihapus.');
+        return to_route('sales.index')->with('success', 'Quotation berhasil dihapus.');
     }
 
     public function printInvoice(Sale $sale): View

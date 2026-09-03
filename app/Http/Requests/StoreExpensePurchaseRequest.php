@@ -27,6 +27,8 @@ class StoreExpensePurchaseRequest extends FormRequest
             'number' => ['required', 'string', 'max:50', Rule::unique('expense_purchases', 'number')->ignore($this->route('expense_purchase'))],
             'supplier_id' => ['nullable', 'exists:contacts,id'],
             'date' => ['required', 'date'],
+            'purchase_type' => ['required', Rule::in(['barang', 'kebutuhan', 'asset'])],
+            'document_type' => ['required', Rule::in(['quotation_po', 'delivery_order', 'invoice', 'retur', 'piutang'])],
             'description' => ['required', 'string', 'max:255'],
             'total' => ['required', 'numeric', 'gt:0'],
             'paid_amount' => ['required', 'numeric', 'min:0', 'lte:total'],

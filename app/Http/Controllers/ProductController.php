@@ -14,7 +14,7 @@ class ProductController extends Controller
      */
     public function index(): View
     {
-        $perPage = in_array(request()->integer('per_page'), [10, 25, 50], true) ? request()->integer('per_page') : 10;
+        $perPage = in_array(request()->integer('per_page'), [5, 10, 25], true) ? request()->integer('per_page') : 5;
         $products = Product::query()
             ->with(['inventoryBatches' => fn ($query) => $query
                 ->select(['id', 'product_id', 'supplier_id', 'received_at', 'remaining_quantity', 'unit_cost'])

@@ -44,7 +44,9 @@ class SalePolicy
      */
     public function delete(User $user, Sale $sale): bool
     {
-        return $user->role === 'admin' && $sale->status === 'open';
+        return in_array($user->role, ['superadmin', 'admin', 'sales'], true)
+            && $sale->document_type === 'quotation'
+            && $sale->status === 'open';
     }
 
     /**

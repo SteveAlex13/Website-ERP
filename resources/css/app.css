@@ -127,13 +127,13 @@ aside > div:last-child::after {
     }
 }
 
-body,
-body > div {
+html[data-theme='dark'] body,
+html[data-theme='dark'] body > div {
     background: #050816 !important;
     color: #dbeafe;
 }
 
-body header {
+html[data-theme='dark'] body header {
     height: 5rem;
     border-bottom: 1px solid #172554;
     background: #111827 !important;
@@ -141,7 +141,7 @@ body header {
     box-shadow: none !important;
 }
 
-body header > div {
+html[data-theme='dark'] body header > div {
     display: flex;
     height: 5rem;
     max-width: none !important;
@@ -151,7 +151,7 @@ body header > div {
     padding-bottom: 0 !important;
 }
 
-body header > div > div {
+html[data-theme='dark'] body header > div > div {
     width: 100%;
 }
 
@@ -159,68 +159,68 @@ body header > div > div {
     top: 1.25rem !important;
 }
 
-body header h2 {
+html[data-theme='dark'] body header h2 {
     color: #eff6ff !important;
 }
 
-main {
+html[data-theme='dark'] main {
     background-color: #050816;
     background-image: radial-gradient(circle at top right, rgb(29 78 216 / 0.22), transparent 32rem);
     color: #dbeafe;
 }
 
-main .bg-white,
-main .erp-panel,
-main .erp-form {
+html[data-theme='dark'] main .bg-white,
+html[data-theme='dark'] main .erp-panel,
+html[data-theme='dark'] main .erp-form {
     border-color: #1e3a8a !important;
     background-color: #0f172a !important;
     color: #dbeafe !important;
 }
 
-main .text-gray-500,
-main .text-slate-500,
-main label {
+html[data-theme='dark'] main .text-gray-500,
+html[data-theme='dark'] main .text-slate-500,
+html[data-theme='dark'] main label {
     color: #93c5fd !important;
 }
 
-main h1,
-main h2,
-main h3,
-main b,
-main .text-gray-700,
-main .text-gray-800,
-main .text-slate-700,
-main .text-slate-900 {
+html[data-theme='dark'] main h1,
+html[data-theme='dark'] main h2,
+html[data-theme='dark'] main h3,
+html[data-theme='dark'] main b,
+html[data-theme='dark'] main .text-gray-700,
+html[data-theme='dark'] main .text-gray-800,
+html[data-theme='dark'] main .text-slate-700,
+html[data-theme='dark'] main .text-slate-900 {
     color: #eff6ff !important;
 }
 
-main input,
-main select,
-main textarea {
+html[data-theme='dark'] main input,
+html[data-theme='dark'] main select,
+html[data-theme='dark'] main textarea {
     border-color: #1e3a8a !important;
     background-color: #111c33 !important;
     color: #e0f2fe !important;
 }
 
-main th {
+html[data-theme='dark'] main th {
     border-color: #1e3a8a !important;
     background: #111c33 !important;
     color: #93c5fd !important;
 }
 
-main td,
-main tbody tr,
-main .border-b,
-main .border-t {
+html[data-theme='dark'] main td,
+html[data-theme='dark'] main tbody tr,
+html[data-theme='dark'] main .border-b,
+html[data-theme='dark'] main .border-t {
     border-color: #172554 !important;
     color: #dbeafe !important;
 }
 
-main tbody tr:hover {
+html[data-theme='dark'] main tbody tr:hover {
     background: rgb(30 64 175 / 0.18) !important;
 }
 
-.dashboard-metrics > * {
+html[data-theme='dark'] .dashboard-metrics > * {
     min-height: 7.5rem;
     border: 1px solid #2563eb;
     background: linear-gradient(135deg, #1d4ed8, #2563eb 52%, #3b82f6) !important;
@@ -228,11 +228,282 @@ main tbody tr:hover {
     box-shadow: 0 18px 40px rgb(2 6 23 / 0.35);
 }
 
-.dashboard-metrics > * span,
-.dashboard-metrics > * b {
+html[data-theme='dark'] .dashboard-metrics > * span,
+html[data-theme='dark'] .dashboard-metrics > * b {
     color: white !important;
 }
 
 .dashboard-theme ~ .py-12 {
     display: none;
+}
+
+html[data-theme='light'] body,
+html[data-theme='light'] body > div {
+    background: #eff6ff !important;
+    color: #1e3a8a;
+}
+
+html[data-theme='light'] body header {
+    border-bottom: 1px solid #bfdbfe;
+    background: #ffffff !important;
+    color: #1e3a8a;
+    box-shadow: 0 1px 3px rgb(30 64 175 / 0.08) !important;
+}
+
+html[data-theme='light'] body header h2,
+html[data-theme='light'] body header b {
+    color: #172554 !important;
+}
+
+html[data-theme='light'] aside {
+    border-color: #bfdbfe !important;
+    background: #ffffff !important;
+    color: #172554 !important;
+}
+
+html[data-theme='light'] aside .bg-slate-900\/50,
+html[data-theme='light'] aside .bg-slate-900 {
+    background-color: #eff6ff !important;
+}
+
+html[data-theme='light'] aside .text-white,
+html[data-theme='light'] aside .text-slate-300,
+html[data-theme='light'] aside .text-slate-400 {
+    color: #1e3a8a !important;
+}
+
+html[data-theme='light'] aside .bg-indigo-600,
+html[data-theme='light'] aside .bg-indigo-600 * {
+    color: #ffffff !important;
+}
+
+html[data-theme='light'] main {
+    background-color: #eff6ff;
+    background-image: radial-gradient(circle at top right, rgb(147 197 253 / 0.38), transparent 32rem);
+    color: #334155;
+}
+
+html[data-theme='light'] main .bg-slate-950,
+html[data-theme='light'] main .bg-slate-950\/50,
+html[data-theme='light'] main .bg-slate-950\/60,
+html[data-theme='light'] main .bg-slate-900,
+html[data-theme='light'] main .bg-slate-900\/50,
+html[data-theme='light'] main .bg-slate-800 {
+    background-color: #ffffff !important;
+}
+
+html[data-theme='light'] main .border-blue-950,
+html[data-theme='light'] main .border-blue-900,
+html[data-theme='light'] main .border-blue-800,
+html[data-theme='light'] main .border-slate-800,
+html[data-theme='light'] main .border-slate-700 {
+    border-color: #bfdbfe !important;
+}
+
+html[data-theme='light'] main h1,
+html[data-theme='light'] main h2,
+html[data-theme='light'] main h3,
+html[data-theme='light'] main b,
+html[data-theme='light'] main .text-white,
+html[data-theme='light'] main .text-slate-200,
+html[data-theme='light'] main .text-slate-300,
+html[data-theme='light'] main .text-slate-400 {
+    color: #172554 !important;
+}
+
+html[data-theme='light'] main input,
+html[data-theme='light'] main select,
+html[data-theme='light'] main textarea {
+    border-color: #93c5fd !important;
+    background-color: #ffffff !important;
+    color: #172554 !important;
+}
+
+html[data-theme='light'] main th {
+    border-color: #bfdbfe !important;
+    background: #dbeafe !important;
+    color: #1e40af !important;
+}
+
+html[data-theme='light'] main td {
+    border-color: #dbeafe !important;
+    color: #334155 !important;
+}
+
+html[data-theme='light'] main tbody tr:hover {
+    background: rgb(219 234 254 / 0.65) !important;
+}
+
+html[data-theme='light'] [class*='bg-indigo-'][class*='text-white'],
+html[data-theme='light'] [class*='bg-blue-'][class*='text-white'],
+html[data-theme='light'] [class*='bg-red-'][class*='text-white'],
+html[data-theme='light'] [class*='bg-emerald-'][class*='text-white'] {
+    color: #ffffff !important;
+}
+
+html[data-theme='light'] header .theme-toggle,
+html[data-theme='light'] header .relative > button,
+html[data-theme='light'] header .relative > div {
+    border-color: #bfdbfe !important;
+    background-color: #ffffff !important;
+    color: #172554 !important;
+}
+
+/* Light theme coverage for legacy dark utility classes across ERP screens. */
+html[data-theme='light'] [class*='bg-slate-950'] {
+    background-color: #f8fafc !important;
+}
+
+html[data-theme='light'] [class*='bg-slate-900'] {
+    background-color: #ffffff !important;
+}
+
+html[data-theme='light'] [class*='bg-slate-800'] {
+    background-color: #eff6ff !important;
+}
+
+html[data-theme='light'] [class*='bg-blue-950'] {
+    background-color: #dbeafe !important;
+}
+
+html[data-theme='light'] [class*='border-blue-950'],
+html[data-theme='light'] [class*='border-blue-900'],
+html[data-theme='light'] [class*='border-blue-800'],
+html[data-theme='light'] [class*='border-slate-800'],
+html[data-theme='light'] [class*='border-slate-700'],
+html[data-theme='light'] [class*='border-\[#1e293b\]'] {
+    border-color: #bfdbfe !important;
+}
+
+html[data-theme='light'] [class*='text-slate-500'],
+html[data-theme='light'] [class*='text-slate-400'] {
+    color: #64748b !important;
+}
+
+html[data-theme='light'] [class*='text-slate-300'],
+html[data-theme='light'] [class*='text-slate-200'],
+html[data-theme='light'] [class*='text-blue-100'],
+html[data-theme='light'] [class*='text-blue-200'] {
+    color: #1e3a8a !important;
+}
+
+html[data-theme='light'] [class*='bg-\[#050816\]'],
+html[data-theme='light'] [class*='bg-\[#0a0f1d\]'],
+html[data-theme='light'] [class*='bg-\[#0d1527\]'],
+html[data-theme='light'] [class*='bg-\[#0f172a\]'],
+html[data-theme='light'] [class*='bg-\[#111c38\]'],
+html[data-theme='light'] [class*='bg-\[#131d35\]'],
+html[data-theme='light'] [class*='bg-\[#131f38\]'],
+html[data-theme='light'] [class*='bg-\[#132247\]'],
+html[data-theme='light'] [class*='bg-\[#1e293b\]'] {
+    background-color: #ffffff !important;
+}
+
+html[data-theme='light'] main section,
+html[data-theme='light'] main article {
+    border-color: #bfdbfe;
+}
+
+html[data-theme='light'] main [class*='shadow'] {
+    --tw-shadow-color: rgb(30 64 175 / 0.1);
+}
+
+html[data-theme='light'] aside nav > a:not(.bg-indigo-600),
+html[data-theme='light'] aside nav > div {
+    background-color: #ffffff !important;
+    color: #1e3a8a !important;
+}
+
+html[data-theme='light'] aside nav > a.bg-indigo-600,
+html[data-theme='light'] aside nav a.bg-indigo-600,
+html[data-theme='light'] aside nav a.bg-indigo-600 b,
+html[data-theme='light'] aside nav a.bg-indigo-600 small {
+    background-color: #4f46e5 !important;
+    color: #ffffff !important;
+}
+
+html[data-theme='light'] aside nav a:hover,
+html[data-theme='light'] aside nav button:hover {
+    background-color: #dbeafe !important;
+}
+
+html[data-theme='light'] aside nav a.bg-indigo-600:hover {
+    background-color: #4338ca !important;
+}
+
+html[data-theme='light'] aside [class*='bg-indigo-'],
+html[data-theme='light'] header [class*='bg-blue-600'] {
+    color: #ffffff !important;
+}
+
+html[data-theme='light'] aside nav::-webkit-scrollbar-track {
+    background: #eff6ff;
+}
+
+html[data-theme='light'] body > nav {
+    border-color: #bfdbfe !important;
+    background: #ffffff !important;
+    color: #1e3a8a !important;
+}
+
+html[data-theme='light'] .fixed.inset-0 > div,
+html[data-theme='light'] [role='dialog'] > div {
+    border-color: #bfdbfe !important;
+}
+
+html[data-theme='light'] [class*='bg-emerald-950'],
+html[data-theme='light'] [class*='bg-emerald-900'] {
+    background-color: #d1fae5 !important;
+}
+
+html[data-theme='light'] [class*='bg-red-950'],
+html[data-theme='light'] [class*='bg-rose-950'] {
+    background-color: #fee2e2 !important;
+}
+
+html[data-theme='light'] [class*='bg-amber-950'] {
+    background-color: #fef3c7 !important;
+}
+
+html[data-theme='light'] [class*='bg-indigo-950'] {
+    background-color: #e0e7ff !important;
+}
+
+html[data-theme='light'] main [class*='text-white'],
+html[data-theme='light'] main [class*='text-gray-100'],
+html[data-theme='light'] main [class*='text-gray-200'] {
+    color: #172554 !important;
+}
+
+html[data-theme='light'] [class*='text-blue-300'],
+html[data-theme='light'] [class*='text-blue-400'],
+html[data-theme='light'] [class*='text-indigo-300'],
+html[data-theme='light'] [class*='text-indigo-400'],
+html[data-theme='light'] [class*='text-cyan-300'],
+html[data-theme='light'] [class*='text-cyan-400'] {
+    color: #1d4ed8 !important;
+}
+
+html[data-theme='light'] main label,
+html[data-theme='light'] main p,
+html[data-theme='light'] main small {
+    opacity: 1;
+}
+
+html[data-theme='light'] main :is(section, article, div, a)[class*='rounded-xl'][class*='border'],
+html[data-theme='light'] main :is(section, article, div, a)[class*='rounded-2xl'][class*='border'],
+html[data-theme='light'] aside :is(div, a)[class*='rounded-xl'][class*='border'] {
+    border-width: 2px !important;
+    border-color: #93c5fd !important;
+}
+
+html[data-theme='light'] main [class*='bg-indigo-'][class*='text-white'],
+html[data-theme='light'] main [class*='bg-blue-'][class*='text-white'],
+html[data-theme='light'] main [class*='bg-violet-'][class*='text-white'],
+html[data-theme='light'] main [class*='bg-red-'][class*='text-white'],
+html[data-theme='light'] main [class*='bg-rose-'][class*='text-white'],
+html[data-theme='light'] main [class*='bg-emerald-'][class*='text-white'],
+html[data-theme='light'] main [class*='from-indigo-'][class*='text-white'],
+html[data-theme='light'] aside [class*='bg-indigo-'][class*='text-white'] {
+    color: #ffffff !important;
 }

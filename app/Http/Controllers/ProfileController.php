@@ -6,7 +6,9 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -35,6 +37,19 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    public function generateQuotationDeleteKey(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->role === 'superadmin', 403);
+
+        $key = Str::upper(Str::random(32));
+        $request->user()->forceFill(['quotation_delete_key' => Hash::make($key)])->save();
+
+        return back()->with([
+            'quotation_delete_key' => $key,
+            'quotation_delete_key_expires_at' => now()->addMinutes(5)->timestamp,
+        ]);
     }
 
     /**

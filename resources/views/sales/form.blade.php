@@ -8,9 +8,9 @@
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 Home
             </a>
-            <a href="{{ route('sales.create') }}" class="flex items-center gap-1.5 rounded-lg bg-[#1e293b] px-4 py-2 text-indigo-400 shadow-inner border border-indigo-500/30">
+            <a href="{{ route('sales.create', $isOnline ? ['mode' => 'online'] : []) }}" class="flex items-center gap-1.5 rounded-lg bg-[#1e293b] px-4 py-2 text-indigo-400 shadow-inner border border-indigo-500/30">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                Transaction
+                {{ $isOnline ? 'POS Online' : 'POS Offline' }}
             </a>
             <a href="{{ route('sales.index') }}" class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-slate-400 transition hover:bg-[#1e293b] hover:text-white">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -18,7 +18,7 @@
             </a>
             <a href="{{ route('reports.daily-financial') }}" class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-slate-400 transition hover:bg-[#1e293b] hover:text-white">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                Detail Penjualan
+                Laporan
             </a>
         </nav>
 
@@ -36,6 +36,13 @@
         @endif
     </div>
 
+    <div class="mb-4 flex items-center justify-between rounded-xl border px-4 py-3 {{ $isOnline ? 'border-blue-500/40 bg-blue-950/50' : 'border-emerald-500/40 bg-emerald-950/40' }}">
+        <div>
+            <b class="block text-sm {{ $isOnline ? 'text-blue-300' : 'text-emerald-300' }}">{{ $isOnline ? 'POS Online — Quotation / PO' : 'POS Offline — Kasir Biasa' }}</b>
+            <span class="text-xs text-slate-400">{{ $isOnline ? 'Transaksi masuk ke tab Quotation / PO dan tidak langsung memotong stok.' : 'Transaksi masuk ke tab Penjualan Offline dan pembayaran langsung tercatat.' }}</span>
+        </div>
+    </div>
+
     @if($errors->any())
         <div class="mb-4 rounded-xl border border-red-500/40 bg-red-950/60 p-3 text-sm text-red-200">
             {{ $errors->first() }}
@@ -49,9 +56,9 @@
 
     <form method="POST" action="{{ route('sales.store') }}" id="posForm" class="grid gap-4 lg:grid-cols-[1fr_1.15fr] xl:grid-cols-[480px_1fr]">
         @csrf
-        <input type="hidden" name="number" value="POS-{{ now()->format('YmdHis') }}">
+        <input type="hidden" name="number" value="{{ $isOnline ? 'WEB' : 'POS' }}-{{ now()->format('YmdHis') }}">
         <input type="hidden" name="date" value="{{ now()->toDateString() }}">
-        <input type="hidden" name="document_type" value="pos">
+        @unless($isOnline)<input type="hidden" name="document_type" value="pos">@endunless
         <input type="hidden" name="sales_user_id" value="{{ auth()->id() }}">
         <input type="hidden" name="discount_type" value="fixed">
         <input type="hidden" name="discount_value" x-bind:value="discountValue">
@@ -111,32 +118,40 @@
 
             <!-- Customer & Tax Settings Bar -->
             <div class="border-t border-[#1e293b] bg-[#0d1527] px-4 py-3 space-y-2">
+                @if($isOnline)
+                    <label class="block text-[11px] text-slate-400">Dokumen Online
+                        <select name="document_type" class="mt-1 w-full rounded-md border border-[#1e293b] bg-[#0a0f1d] px-2.5 py-1.5 text-xs text-white focus:border-indigo-500">
+                            <option value="quotation">Quotation</option>
+                            <option value="order">Purchase Order (PO)</option>
+                        </select>
+                    </label>
+                @endif
                 <div class="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">Customer</label>
+                        <label class="mb-1 block text-[11px] text-slate-400">Customer {{ $isOnline ? '(wajib)' : '(opsional)' }}</label>
                         <select name="customer_id" x-model="selectedCustomer" class="w-full rounded-md border border-[#1e293b] bg-[#0a0f1d] px-2.5 py-1.5 text-xs text-white focus:border-indigo-500">
-                            <option value="">-- Pilih Customer --</option>
+                            <option value="">{{ $isOnline ? '-- Pilih Customer --' : 'Pelanggan Umum' }}</option>
                             @foreach($customers as $customer)
                                 <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div>
+                    @unless($isOnline)<div>
                         <label class="block text-[11px] text-slate-400 mb-1">Nama Meja / Bill</label>
                         <input name="bill_name" type="text" placeholder="Contoh: Meja 01" class="w-full rounded-md border border-[#1e293b] bg-[#0a0f1d] px-2.5 py-1.5 text-xs text-white focus:border-indigo-500">
-                    </div>
+                    </div>@endunless
                 </div>
 
                 <!-- Payment Details (Metode & Uang Diterima) -->
-                <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-[#1e293b]/50">
+                @unless($isOnline)<div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-[#1e293b]/50">
                     <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">Metode Bayar</label>
-                        <select x-model="paymentMethod" name="payment_method" class="w-full rounded-md border border-[#1e293b] bg-[#0a0f1d] px-2.5 py-1.5 text-xs text-white">
-                            <option value="cash">Tunai (Cash)</option>
-                            <option value="qris">QRIS</option>
-                            <option value="bank_transfer">Transfer Bank</option>
-                            <option value="debit_card">Kartu Debit</option>
+                        <label class="mb-1 block text-[11px] text-slate-400">Metode Bayar</label>
+                        <select x-model="selectedBankAccount" name="bank_account_id" @change="syncPaymentMethod()" class="w-full rounded-md border border-[#1e293b] bg-[#0a0f1d] px-2.5 py-1.5 text-xs text-white">
+                            @foreach($bankAccounts as $account)
+                                <option value="{{ $account->id }}">{{ $account->name === 'Tunai' ? 'Tunai' : str_replace('Bank ', '', $account->name) }}</option>
+                            @endforeach
                         </select>
+                        <input type="hidden" name="payment_method" :value="paymentMethod">
                     </div>
                     <div x-show="paymentMethod === 'cash'">
                         <label class="block text-[11px] text-slate-400 mb-1">Uang Diterima</label>
@@ -146,7 +161,7 @@
                         Auto-nominal sesuai total
                     </div>
                     <input type="hidden" name="paid_amount" :value="effectivePaid">
-                </div>
+                </div>@endunless
             </div>
 
             <!-- Two-Column Order Summary Box -->
@@ -195,6 +210,13 @@
             </div>
 
             <!-- Action Buttons -->
+            @if($isOnline)
+                <div class="border-t border-[#1e293b] bg-[#0d1527] p-3">
+                    <button type="submit" :disabled="cart.length === 0 || ! selectedCustomer" class="flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40">
+                        Simpan Quotation / PO
+                    </button>
+                </div>
+            @else
             <div class="grid grid-cols-2 gap-2 p-3 bg-[#0d1527] border-t border-[#1e293b]">
                 <button type="submit" name="submit_action" value="transaction" :disabled="cart.length === 0 || (paymentMethod === 'cash' && paid < grandTotal)" class="flex items-center justify-center gap-1.5 rounded-lg bg-[#10b981] py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow transition hover:bg-[#059669] disabled:cursor-not-allowed disabled:opacity-40">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -205,6 +227,7 @@
                     Simpan Bill
                 </button>
             </div>
+            @endif
         </section>
 
         <!-- RIGHT PANEL: CATALOG & SEARCH -->
@@ -266,23 +289,32 @@
 function posKasir() {
     var products = {{ Js::from($products) }};
     var customers = {{ Js::from($customers) }};
+    var bankAccounts = {{ Js::from($bankAccounts) }};
+    var defaultBankAccount = bankAccounts.find(account => ['Tunai', 'Cash'].includes(account.name) || account.name.startsWith('Kas')) || bankAccounts[0];
 
     return {
         products: products,
         customers: customers,
+        bankAccounts: bankAccounts,
         cart: [],
         search: '',
         couponCode: '',
         discount: 0,
         paid: 0,
-        paymentMethod: 'cash',
+        selectedBankAccount: defaultBankAccount ? String(defaultBankAccount.id) : '',
+        paymentMethod: defaultBankAccount && (['Tunai', 'Cash'].includes(defaultBankAccount.name) || defaultBankAccount.name.startsWith('Kas')) ? 'cash' : 'bank_transfer',
         selectedCustomer: '',
         selectedCategory: 'all',
 
         get customerName() {
-            if (!this.selectedCustomer) return 'No data';
+            if (!this.selectedCustomer) return 'Pelanggan Umum';
             var cust = this.customers.find(c => String(c.id) === String(this.selectedCustomer));
-            return cust ? cust.name : 'No data';
+            return cust ? cust.name : 'Pelanggan Umum';
+        },
+
+        syncPaymentMethod() {
+            var account = this.bankAccounts.find(item => String(item.id) === String(this.selectedBankAccount));
+            this.paymentMethod = account && (['Tunai', 'Cash'].includes(account.name) || account.name.startsWith('Kas')) ? 'cash' : 'bank_transfer';
         },
 
         get filteredProducts() {
@@ -403,4 +435,3 @@ function posKasir() {
 }
 </script>
 </x-app-layout>
-

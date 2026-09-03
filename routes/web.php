@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::middleware('role:superadmin')->group(function () {
+        Route::post('/profile/quotation-delete-key', [ProfileController::class, 'generateQuotationDeleteKey'])->name('profile.quotation-delete-key.generate');
         Route::get('user-roles', [UserRoleController::class, 'index'])->name('user-roles.index');
         Route::patch('user-roles/{user}', [UserRoleController::class, 'update'])->name('user-roles.update');
     });

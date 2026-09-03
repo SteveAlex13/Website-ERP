@@ -4,10 +4,19 @@
 @if(session('success'))<div class='mb-5 rounded-xl border border-emerald-500/40 bg-emerald-950/60 p-4 text-sm text-emerald-200'>{{ session('success') }}</div>@endif
 @if($errors->any())<div class='mb-5 rounded-xl border border-red-500/40 bg-red-950/60 p-4 text-sm text-red-200'>{{ $errors->first() }}</div>@endif
 <section class='overflow-hidden rounded-2xl border border-blue-900 bg-slate-900'>
-<div class='flex flex-col justify-between gap-4 border-b border-blue-950 p-6 sm:flex-row sm:items-center'><div><p class='text-sm text-blue-300'>{{ $sale->number }}</p><h3 class='text-xl font-bold text-white'>{{ $sale->customer->name }}</h3><div class='mt-2 flex flex-wrap gap-2'><span class='rounded-full bg-blue-950 px-3 py-1 text-xs text-blue-200'>{{ ucfirst($sale->status) }}</span>@if($sale->payment_method)<span class='rounded-full bg-emerald-950 px-3 py-1 text-xs text-emerald-200'>{{ str_replace('_',' ',ucfirst($sale->payment_method)) }} · {{ $sale->bankAccount?->name }}</span>@endif</div></div><a href='{{ route('sales.invoice.print',$sale) }}' target='_blank' class='erp-btn-secondary'>Cetak Invoice</a></div>
+<div class='flex flex-col justify-between gap-4 border-b border-blue-950 p-6 sm:flex-row sm:items-center'><div><p class='text-sm text-blue-300'>{{ $sale->number }}</p><h3 class='text-xl font-bold text-white'>{{ $sale->customer?->name ?? 'Pelanggan Umum' }}</h3><div class='mt-2 flex flex-wrap gap-2'><span class='rounded-full bg-blue-950 px-3 py-1 text-xs text-blue-200'>{{ ucfirst($sale->status) }}</span>@if($sale->payment_method)<span class='rounded-full bg-emerald-950 px-3 py-1 text-xs text-emerald-200'>{{ str_replace('_',' ',ucfirst($sale->payment_method)) }} · {{ $sale->bankAccount?->name }}</span>@endif</div></div><a href='{{ route('sales.invoice.print',$sale) }}' target='_blank' class='erp-btn-secondary'>Cetak Invoice</a></div>
 <div class='overflow-x-auto p-5'><table class='min-w-full text-sm'><thead><tr><th>Produk</th><th>Jumlah</th><th>Harga</th><th>Subtotal</th><th>Stok</th></tr></thead><tbody>@foreach($sale->items as $item)<tr><td>{{ $item->product->name }}</td><td>{{ $item->quantity }} {{ $item->product->unit }}</td><td>Rp {{ number_format((float)$item->price,0,',','.') }}</td><td>Rp {{ number_format((float)$item->subtotal,0,',','.') }}</td><td>{{ $item->product->stock }}</td></tr>@endforeach</tbody></table></div>
 <div class='flex justify-end border-t border-blue-950 p-5 text-xl font-bold text-white'>Total: Rp {{ number_format((float)$sale->total,0,',','.') }}</div>
 </section>
+@if($sale->document_type === 'quotation' && $sale->status === 'open')
+@can('delete', $sale)
+<form method='POST' action='{{ route('sales.destroy', $sale) }}' class='mt-5 rounded-2xl border border-red-500/30 bg-red-950/20 p-5'>@csrf @method('DELETE')
+<h3 class='font-bold text-red-300'>Hapus Quotation</h3><p class='mt-1 text-sm text-slate-400'>Masukkan key penghapusan dari Super Admin.</p>
+<div class='mt-4 flex flex-col gap-3 sm:flex-row'><input type='password' name='quotation_key' required maxlength='100' autocomplete='off' class='min-w-0 flex-1 rounded-xl border-red-900 bg-slate-950 text-white' placeholder='Key penghapusan'><button class='rounded-xl bg-red-600 px-5 py-3 font-bold text-white'>Hapus Transaksi</button></div>
+@error('quotation_key')<p class='mt-2 text-sm text-red-300'>{{ $message }}</p>@enderror
+</form>
+@endcan
+@endif
 @if($sale->document_type === 'pos' && $sale->status === 'open')
 <form method='POST' action='{{ route('sales.payment',$sale) }}' class='mt-5 grid gap-4 rounded-2xl border border-amber-500/30 bg-slate-900 p-6 sm:grid-cols-3'>@csrf
 <div class='sm:col-span-3'><h3 class='text-lg font-bold text-white'>Bayar Open Bill</h3><p class='text-sm text-slate-400'>Stok FIFO dikeluarkan setelah pembayaran berhasil.</p></div>

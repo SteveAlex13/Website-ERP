@@ -5,6 +5,7 @@ namespace App\Actions;
 use App\Models\BankAccount;
 use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CompleteSalePayment
@@ -20,16 +21,12 @@ class CompleteSalePayment
                 throw ValidationException::withMessages(['sale' => 'Bill ini tidak dapat dibayar.']);
             }
 
-            $paymentMethod = $payment['payment_method'];
+            $bankAccount = BankAccount::query()->findOrFail($payment['bank_account_id']);
+            $paymentMethod = Str::startsWith($bankAccount->name, ['Kas', 'Tunai', 'Cash']) ? 'cash' : 'bank_transfer';
             $paidAmount = $paymentMethod === 'cash' ? (float) ($payment['paid_amount'] ?? 0) : (float) $sale->total;
             if ($paidAmount < (float) $sale->total) {
                 throw ValidationException::withMessages(['paid_amount' => 'Jumlah pembayaran kurang dari total transaksi.']);
             }
-
-            $bankAccount = $paymentMethod === 'cash'
-                ? BankAccount::query()->where('name', 'like', 'Kas%')->orderBy('id')->first()
-                : BankAccount::query()->where('name', 'not like', 'Kas%')->orderBy('id')->first();
-            $bankAccount ??= BankAccount::query()->orderBy('id')->firstOrFail();
 
             $sale->load('items');
             foreach ($sale->items as $saleItem) {

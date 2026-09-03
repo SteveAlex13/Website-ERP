@@ -12,17 +12,35 @@ class ExpensePurchaseController extends Controller
 {
     public function index(): View
     {
+        $documentTypes = ['quotation_po', 'delivery_order', 'invoice', 'retur', 'piutang'];
+        $activeDocumentType = in_array(request('document_type'), $documentTypes, true) ? request('document_type') : 'quotation_po';
         $perPage = in_array(request()->integer('per_page'), [10, 25, 50], true) ? request()->integer('per_page') : 10;
-        $expensePurchases = ExpensePurchase::query()->with('supplier:id,name')
+        $purchaseTypeQuery = ExpensePurchase::query()
+            ->when(request('purchase_type'), fn ($query, $purchaseType) => $query->where('purchase_type', $purchaseType));
+        $expensePurchases = (clone $purchaseTypeQuery)->with('supplier:id,name')
             ->when(request('search'), fn ($query, $search) => $query->where(fn ($query) => $query->where('number', 'like', '%'.$search.'%')->orWhere('description', 'like', '%'.$search.'%')))
+            ->where('document_type', $activeDocumentType)
             ->latest()->paginate($perPage)->withQueryString();
+        $documentCounts = (clone $purchaseTypeQuery)
+            ->selectRaw('document_type, COUNT(*) as aggregate')
+            ->groupBy('document_type')
+            ->pluck('aggregate', 'document_type');
+        $outstandingPurchaseQuery = (clone $purchaseTypeQuery)->whereColumn('paid_amount', '<', 'total');
+        $totalOutstanding = (float) (clone $outstandingPurchaseQuery)->sum('total') - (float) (clone $outstandingPurchaseQuery)->sum('paid_amount');
+        $unpaidPurchaseCount = (clone $outstandingPurchaseQuery)->count();
 
-        return view('expense-purchases.index', compact('expensePurchases'));
+        return view('expense-purchases.index', compact('expensePurchases', 'documentCounts', 'activeDocumentType', 'totalOutstanding', 'unpaidPurchaseCount'));
     }
 
     public function create(): View
     {
-        return view('expense-purchases.form', ['expensePurchase' => new ExpensePurchase, 'suppliers' => Contact::suppliers()->orderBy('name')->get(['id', 'name'])]);
+        $expensePurchase = new ExpensePurchase;
+
+        if (in_array(request('document_type'), ['quotation_po', 'delivery_order', 'invoice', 'retur', 'piutang'], true)) {
+            $expensePurchase->document_type = request('document_type');
+        }
+
+        return view('expense-purchases.form', ['expensePurchase' => $expensePurchase, 'suppliers' => Contact::suppliers()->orderBy('name')->get(['id', 'name'])]);
     }
 
     public function store(StoreExpensePurchaseRequest $request): RedirectResponse
@@ -31,7 +49,7 @@ class ExpensePurchaseController extends Controller
         $data['payment_status'] = $this->paymentStatus($data);
         ExpensePurchase::create($data);
 
-        return to_route('expense-purchases.index')->with('success', 'Pembelian kebutuhan berhasil dicatat.');
+        return to_route('expense-purchases.index')->with('success', 'Pembelian berhasil dicatat.');
     }
 
     public function edit(ExpensePurchase $expensePurchase): View
@@ -45,7 +63,7 @@ class ExpensePurchaseController extends Controller
         $data['payment_status'] = $this->paymentStatus($data);
         $expensePurchase->update($data);
 
-        return to_route('expense-purchases.index')->with('success', 'Pembelian kebutuhan diperbarui.');
+        return to_route('expense-purchases.index')->with('success', 'Pembelian berhasil diperbarui.');
     }
 
     private function paymentStatus(array $data): string

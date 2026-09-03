@@ -8,13 +8,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['number', 'supplier_id', 'date', 'description', 'total', 'paid_amount', 'payment_status', 'notes'])]
+#[Fillable(['number', 'supplier_id', 'date', 'purchase_type', 'document_type', 'description', 'total', 'paid_amount', 'payment_status', 'notes'])]
 class ExpensePurchase extends Model
 {
     /** @use HasFactory<ExpensePurchaseFactory> */
     use HasFactory;
 
-    protected $attributes = ['paid_amount' => 0, 'payment_status' => 'unpaid'];
+    protected $attributes = [
+        'purchase_type' => 'kebutuhan',
+        'document_type' => 'invoice',
+        'paid_amount' => 0,
+        'payment_status' => 'unpaid',
+    ];
 
     protected function casts(): array
     {

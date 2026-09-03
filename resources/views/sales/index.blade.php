@@ -7,9 +7,9 @@
                 <p class="text-xs text-blue-300 mt-0.5">Quotation, PO, diskon, komisi, dan piutang customer.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('sales.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:bg-indigo-500">
+                <a href="{{ route('sales.create', ['mode' => 'online']) }}" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:bg-indigo-500">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    + Tambah Penjualan / POS
+                    + Buat Quotation / PO
                 </a>
             </div>
         </div>
@@ -22,6 +22,10 @@
             <button type="button" @click="tab = 'orders'" :class="tab === 'orders' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'" class="flex items-center gap-2 rounded-xl px-4 py-2.5 transition">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Quotation / PO
+            </button>
+            <button type="button" @click="tab = 'offline'" :class="tab === 'offline' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'" class="flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M5 6h14l1 4v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8l1-4zm4 8h6"/></svg>
+                Penjualan Offline
             </button>
             <button type="button" @click="tab = 'delivery'" :class="tab === 'delivery' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'" class="flex items-center gap-2 rounded-xl px-4 py-2.5 transition">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
@@ -91,9 +95,9 @@
         </div>
 
         <!-- ================= TAB 1: QUOTATION / PO ================= -->
-        <div x-show="tab === 'orders'" x-transition class="space-y-4">
+        <div x-data="{ deleteAction: '', deleteNumber: '' }" x-show="tab === 'orders'" x-transition class="space-y-4">
             <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
-                <x-list-toolbar :create-route="route('sales.create')" create-label="Tambah Penjualan" placeholder="Cari nomor dokumen..." />
+                <x-list-toolbar :create-route="route('sales.create', ['mode' => 'online'])" create-label="Buat Quotation / PO" placeholder="Cari nomor dokumen..." />
                 
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
@@ -114,7 +118,7 @@
                                     <td class="px-4 py-3.5 text-slate-400">{{ $sales->firstItem() + $loop->index }}</td>
                                     <td class="px-4 py-3.5">
                                         <b class="text-white">{{ $sale->number }}</b>
-                                        <small class="block text-xs text-blue-300">{{ $sale->date->format('d M Y') }}</small>
+                                        <small class="block text-xs text-blue-300">{{ $sale->date->format('d M Y') }} · {{ $sale->document_type === 'quotation' ? 'Quotation' : 'PO' }}</small>
                                     </td>
                                     <td class="px-4 py-3.5 font-medium text-white">{{ $sale->customer?->name ?? 'Pelanggan Umum' }}</td>
                                     <td class="px-4 py-3.5 text-right font-bold text-white">Rp {{ number_format((float) $sale->total, 0, ',', '.') }}</td>
@@ -136,6 +140,9 @@
                                             <a href="{{ route('sales.invoice.print', $sale) }}" target="_blank" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition">
                                                 Cetak
                                             </a>
+                                            @can('delete', $sale)
+                                                <button type="button" data-action="{{ route('sales.destroy', $sale) }}" data-number="{{ $sale->number }}" x-on:click="deleteAction = $event.currentTarget.dataset.action; deleteNumber = $event.currentTarget.dataset.number; $dispatch('open-modal', 'delete-quotation')" class="rounded-lg bg-red-600/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600">Hapus</button>
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>
@@ -148,7 +155,72 @@
                     </table>
                 </div>
             </div>
+            <x-modal name="delete-quotation" maxWidth="md" focusable>
+                <form method="POST" x-bind:action="deleteAction" class="bg-slate-900 p-6 text-white">
+                    @csrf
+                    @method('DELETE')
+                    <h3 class="text-lg font-bold text-red-300">Hapus Quotation</h3>
+                    <p class="mt-2 text-sm text-slate-400">Masukkan key Super Admin untuk menghapus <b class="text-white" x-text="deleteNumber"></b>.</p>
+                    <input type="password" name="quotation_key" required maxlength="100" autocomplete="off" class="mt-5 w-full rounded-xl border-red-900 bg-slate-950 text-white" placeholder="Key penghapusan quotation">
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" x-on:click="$dispatch('close-modal', 'delete-quotation')" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800">Batal</button>
+                        <button class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500">Hapus Quotation</button>
+                    </div>
+                </form>
+            </x-modal>
             <div>{{ $sales->links() }}</div>
+        </div>
+
+        <div x-data="{ refundAction: '', refundNumber: '' }" x-show="tab === 'offline'" x-transition class="space-y-4">
+            <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
+                <div class="border-b border-blue-950 bg-slate-950/60 p-4">
+                    <h4 class="text-sm font-bold text-white">Daftar Penjualan Offline</h4>
+                    <p class="text-xs text-slate-400">Transaksi langsung dari POS Kasir</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-blue-950/70 text-slate-300">
+                            <tr><th class="px-4 py-3.5 text-left">No.</th><th class="px-4 py-3.5 text-left">No. Transaksi</th><th class="px-4 py-3.5 text-left">Customer</th><th class="px-4 py-3.5 text-left">Kasir</th><th class="px-4 py-3.5 text-right">Nilai Total</th><th class="px-4 py-3.5 text-center">Status</th><th class="px-4 py-3.5 text-center">Aksi</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-blue-950/60 text-slate-200">
+                            @forelse($offlineSales as $sale)
+                                <tr class="transition hover:bg-blue-950/30">
+                                    <td class="px-4 py-3.5 text-slate-400">{{ $offlineSales->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3.5"><b class="text-white">{{ $sale->number }}</b><small class="block text-xs text-blue-300">{{ $sale->date->format('d M Y') }}</small></td>
+                                    <td class="px-4 py-3.5 font-medium text-white">{{ $sale->customer?->name ?? 'Pelanggan Umum' }}</td>
+                                    <td class="px-4 py-3.5 text-slate-300">{{ $sale->salesUser?->name ?? '-' }}</td>
+                                    <td class="px-4 py-3.5 text-right font-bold text-white">Rp {{ number_format((float) $sale->total, 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3.5 text-center"><span class="inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold capitalize {{ $sale->status === 'completed' ? 'border-emerald-800/40 bg-emerald-900/60 text-emerald-300' : 'border-slate-700/50 bg-slate-800 text-slate-300' }}">{{ ucfirst($sale->status) }}</span></td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <a href="{{ route('sales.show', $sale) }}" class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-600">Detail</a>
+                                            <a href="{{ route('sales.invoice.print', $sale) }}" target="_blank" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700">Cetak</a>
+                                            @if($sale->status === 'completed' && in_array(auth()->user()->role, ['superadmin', 'admin', 'cashier', 'finance'], true))
+                                                <button type="button" data-action="{{ route('sales.refund', $sale) }}" data-number="{{ $sale->number }}" x-on:click="refundAction = $event.currentTarget.dataset.action; refundNumber = $event.currentTarget.dataset.number; $dispatch('open-modal', 'refund-offline-sale')" class="rounded-lg bg-red-600/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600">Refund</button>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="7" class="py-12 text-center text-slate-400">Belum ada transaksi penjualan offline.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <x-modal name="refund-offline-sale" maxWidth="md" focusable>
+                <form method="POST" x-bind:action="refundAction" class="bg-slate-900 p-6 text-white">
+                    @csrf
+                    <h3 class="text-lg font-bold text-red-300">Refund Penjualan Offline</h3>
+                    <p class="mt-2 text-sm text-slate-400">Refund <b class="text-white" x-text="refundNumber"></b> akan mengembalikan stok FIFO dan membalik mutasi pembayaran Kas/Bank.</p>
+                    <input type="text" name="reason" required maxlength="255" class="mt-5 w-full rounded-xl border-red-900 bg-slate-950 text-white" placeholder="Alasan refund">
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" x-on:click="$dispatch('close-modal', 'refund-offline-sale')" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800">Batal</button>
+                        <button class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500">Refund Transaksi</button>
+                    </div>
+                </form>
+            </x-modal>
+            <div>{{ $offlineSales->appends(['tab' => 'offline'])->links() }}</div>
         </div>
 
         <!-- ================= TAB 2: DELIVERY ORDER ================= -->
@@ -374,5 +446,3 @@
 
     </div>
 </x-app-layout>
-
-

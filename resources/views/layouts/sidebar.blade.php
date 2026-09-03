@@ -4,6 +4,7 @@
         @php
             $role = auth()->user()->role;
             $links = [['dashboard','Dashboard','Ringkasan']];
+            $links[] = ['sales.create','POS Kasir','Buka Transaksi Kasir'];
             if ($role === 'superadmin') {
                 $links[] = ['user-roles.index','Manajemen Role','Akses Pengguna'];
             }
@@ -11,20 +12,13 @@
             if (in_array($role,['superadmin','admin','purchasing','sales','finance'])) {
                 $links[] = ['contacts-menu','Kontak','Customer & Supplier'];
             }
-            $links[] = ['sales.create','POS Kasir','Buka Transaksi Kasir'];
             $links[] = ['sales.index','Daftar Penjualan','Riwayat Transaksi'];
             if (in_array($role,['superadmin','admin','purchasing','finance'])) {
-                $links[] = ['expense-purchases.index','Pembelian Kebutuhan','Utang & Kebutuhan Operasional'];
+                $links[] = ['expense-purchases.index','Daftar Pembelian','Barang, Kebutuhan & Asset'];
             }
             if (in_array($role,['superadmin','admin','finance'])) {
                 $links[] = ['cash-expenses.index','Kas & Bank','Pengeluaran'];
-                $links[] = ['assets.index','Pembelian Aset','Asset Management'];
-                $links[] = ['reports.daily-financial','Laporan Keuangan Harian','Sales Kotor & Bersih'];
-                $links[] = ['reports.bank','Laporan Bank','Mutasi & Saldo Akun'];
-                $links[] = ['reports.index','Laporan ERP','Analisis Periode'];
-            }
-            if (in_array($role,['superadmin','admin','finance','warehouse'])) {
-                $links[] = ['product-returns.index','Retur','Retur Jual & Beli'];
+                $links[] = ['reports.daily-financial','Laporan','Harian, Bulanan & Tahunan'];
             }
         @endphp
         @foreach($links as [$routeName,$label,$caption])

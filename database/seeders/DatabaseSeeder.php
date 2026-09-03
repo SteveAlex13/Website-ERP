@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\BankAccount;
 use App\Models\Contact;
 use App\Models\Product;
 use App\Models\User;
@@ -33,12 +32,7 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        foreach (['Kas Kecil', 'Bank BCA', 'Bank Mandiri', 'Bank BRI'] as $index => $name) {
-            BankAccount::query()->firstOrCreate(
-                ['name' => $name],
-                ['account_number' => $index === 0 ? null : '1000000'.$index, 'opening_balance' => 100000000],
-            );
-        }
+        $this->call(RequiredBankAccountsSeeder::class);
 
         Contact::query()->firstOrCreate(['type' => 'supplier', 'name' => 'PT Sumber Niaga']);
         Contact::query()->firstOrCreate(['type' => 'customer', 'name' => 'Toko Sejahtera']);

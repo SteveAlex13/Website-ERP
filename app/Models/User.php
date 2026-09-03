@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'email', 'password', 'role', 'sales_target', 'commission_type', 'commission_value'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'quotation_delete_key'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
