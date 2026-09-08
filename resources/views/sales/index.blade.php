@@ -109,7 +109,7 @@
                                 <th class="px-4 py-3.5 text-right">Nilai Total</th>
                                 <th class="px-4 py-3.5 text-center">Terkirim</th>
                                 <th class="px-4 py-3.5 text-center">Status</th>
-                                <th class="px-4 py-3.5 text-center">Aksi</th>
+                                <th class="min-w-[11rem] px-4 py-3.5 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-blue-950/60 text-slate-200">
@@ -131,6 +131,7 @@
                                         <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize {{ $sale->status === 'completed' ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-800/40' : ($sale->status === 'partial' ? 'bg-blue-900/60 text-blue-300 border border-blue-800/40' : 'bg-slate-800 text-slate-300 border border-slate-700/50') }}">
                                             {{ ucfirst($sale->status) }}
                                         </span>
+                                        <small class="mt-1 block text-[10px] font-bold {{ (float) $sale->paid_amount >= (float) $sale->total ? 'text-emerald-400' : 'text-amber-400' }}">{{ (float) $sale->paid_amount >= (float) $sale->total ? 'Lunas' : 'Belum Lunas' }}</small>
                                     </td>
                                     <td class="px-4 py-3.5 text-center">
                                         <div class="flex items-center justify-center gap-2">
@@ -212,8 +213,9 @@
                 <form method="POST" x-bind:action="refundAction" class="bg-slate-900 p-6 text-white">
                     @csrf
                     <h3 class="text-lg font-bold text-red-300">Refund Penjualan Offline</h3>
-                    <p class="mt-2 text-sm text-slate-400">Refund <b class="text-white" x-text="refundNumber"></b> akan mengembalikan stok FIFO dan membalik mutasi pembayaran Kas/Bank.</p>
+                    <p class="mt-2 text-sm text-slate-400">Refund <b class="text-white" x-text="refundNumber"></b> memerlukan key Super Admin dan akan mengembalikan stok FIFO serta membalik mutasi pembayaran Kas/Bank.</p>
                     <input type="text" name="reason" required maxlength="255" class="mt-5 w-full rounded-xl border-red-900 bg-slate-950 text-white" placeholder="Alasan refund">
+                    <input type="password" name="quotation_key" required maxlength="100" autocomplete="off" class="mt-3 w-full rounded-xl border-red-900 bg-slate-950 text-white" placeholder="Key otorisasi Super Admin">
                     <div class="mt-6 flex justify-end gap-3">
                         <button type="button" x-on:click="$dispatch('close-modal', 'refund-offline-sale')" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800">Batal</button>
                         <button class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500">Refund Transaksi</button>
@@ -225,6 +227,42 @@
 
         <!-- ================= TAB 2: DELIVERY ORDER ================= -->
         <div x-show="tab === 'delivery'" x-transition class="space-y-4">
+            <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
+                <div class="flex items-center justify-between border-b border-blue-950 bg-slate-950/60 p-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-white">PO Menunggu Pengiriman</h4>
+                        <p class="text-xs text-slate-400">PO yang baru dibuat otomatis masuk ke daftar ini untuk dibuatkan Delivery Order nanti.</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-blue-950/70 text-slate-300"><tr><th class="px-4 py-3.5 text-left">No.</th><th class="px-4 py-3.5 text-left">Nomor PO</th><th class="px-4 py-3.5 text-left">Customer</th><th class="px-4 py-3.5 text-left">Tanggal Pesan</th><th class="px-4 py-3.5 text-center">Pengiriman</th><th class="px-4 py-3.5 text-center">Pembayaran</th><th class="px-4 py-3.5 text-center">Aksi</th></tr></thead>
+                        <tbody class="divide-y divide-blue-950/60 text-slate-200">
+                            @forelse($pendingDeliverySales as $pendingSale)
+                                <tr class="transition hover:bg-blue-950/30">
+                                    <td class="px-4 py-3.5 text-slate-400">{{ $pendingDeliverySales->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3.5 font-bold text-blue-300"><a href="{{ route('sales.show', $pendingSale) }}" class="hover:underline">{{ $pendingSale->number }}</a></td>
+                                    <td class="px-4 py-3.5 font-medium text-white">{{ $pendingSale->customer?->name ?? 'Pelanggan Umum' }}</td>
+                                    <td class="px-4 py-3.5 text-slate-300">{{ $pendingSale->date->format('d/m/Y') }}</td>
+                                    <td class="px-4 py-3.5 text-center"><span class="rounded-full border border-blue-800/50 bg-blue-950 px-2.5 py-1 text-xs font-semibold text-blue-300">{{ $pendingSale->deliveryPercentage() }}% terkirim</span></td>
+                                    <td class="px-4 py-3.5 text-center"><span class="text-xs font-bold {{ (float) $pendingSale->paid_amount >= (float) $pendingSale->total ? 'text-emerald-400' : 'text-amber-400' }}">{{ (float) $pendingSale->paid_amount >= (float) $pendingSale->total ? 'Lunas' : 'Belum Lunas' }}</span></td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        @if(in_array(auth()->user()->role, ['superadmin', 'admin', 'warehouse'], true))
+                                            <a href="{{ route('sales.show', $pendingSale) }}" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500">Buat Delivery Order</a>
+                                        @else
+                                            <a href="{{ route('sales.show', $pendingSale) }}" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300">Detail</a>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="7" class="py-10 text-center text-slate-400">Tidak ada PO yang menunggu pengiriman.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>{{ $pendingDeliverySales->appends(['tab' => 'delivery'])->links() }}</div>
+
             <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
                 <div class="border-b border-blue-950 p-4 bg-slate-950/60 flex items-center justify-between">
                     <div>
@@ -282,12 +320,12 @@
         </div>
 
         <!-- ================= TAB 3: INVOICE ================= -->
-        <div x-show="tab === 'invoice'" x-transition class="space-y-4">
+        <div x-data="{ paymentSaleId: null, paymentNumber: '', paymentTotal: 0, paymentPaid: 0, paymentRemaining: 0, paymentAction: '', paymentIsCash: false }" x-show="tab === 'invoice'" x-transition class="space-y-4">
             <div class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
                 <div class="border-b border-blue-950 p-4 bg-slate-950/60 flex items-center justify-between">
                     <div>
                         <h4 class="text-sm font-bold text-white">Daftar Tagihan &amp; Invoice</h4>
-                        <p class="text-xs text-slate-400">Faktur penagihan penjualan kepada customer</p>
+                        <p class="text-xs text-slate-400">Faktur penagihan penjualan kepada customer (Quotation &amp; PO dapat diselesaikan langsung di sini)</p>
                     </div>
                 </div>
 
@@ -322,9 +360,24 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3.5 text-center">
-                                        <a href="{{ route('sales.invoice.print', $inv) }}" target="_blank" class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-600 transition">
-                                            Cetak Invoice
-                                        </a>
+                                        <div class="flex items-center justify-center gap-2">
+                                            @if((float)$inv->paid_amount < (float)$inv->total && !in_array($inv->status, ['cancelled', 'refunded'], true))
+                                                <button 
+                                                    type="button" 
+                                                    @click="paymentSaleId = {{ $inv->id }}; paymentNumber = '{{ $inv->number }}'; paymentTotal = {{ (float)$inv->total }}; paymentPaid = {{ (float)$inv->paid_amount }}; paymentRemaining = {{ max(0, (float)$inv->total - (float)$inv->paid_amount) }}; paymentAction = '{{ route('sales.payment', $inv) }}'; paymentIsCash = false; $dispatch('open-modal', 'pay-invoice-modal')" 
+                                                    class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500 transition shadow"
+                                                >
+                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                    Selesaikan
+                                                </button>
+                                            @endif
+                                            <a href="{{ route('sales.show', $inv) }}" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition">
+                                                Detail
+                                            </a>
+                                            <a href="{{ route('sales.invoice.print', $inv) }}" target="_blank" class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-600 transition">
+                                                Cetak
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -336,6 +389,59 @@
                     </table>
                 </div>
             </div>
+
+            <!-- MODAL SELESAIKAN INVOICE -->
+            <x-modal name="pay-invoice-modal" maxWidth="md" focusable>
+                <form method="POST" :action="paymentAction" class="bg-slate-900 p-6 text-white space-y-4">
+                    @csrf
+                    <input type="hidden" name="redirect_to_invoices" value="1">
+                    
+                    <div class="border-b border-blue-950 pb-3">
+                        <h3 class="text-lg font-bold text-white">Selesaikan Invoice Penjualan</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Catat pembayaran dan selesaikan transaksi <b class="text-blue-300" x-text="paymentNumber"></b></p>
+                    </div>
+
+                    <div class="rounded-xl border border-blue-900/60 bg-slate-950/60 p-3 text-xs space-y-1.5">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Total Tagihan:</span>
+                            <span class="font-semibold text-white" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(paymentTotal)"></span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                            <span>Sudah Dibayar:</span>
+                            <span class="font-semibold text-emerald-400" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(paymentPaid)"></span>
+                        </div>
+                        <div class="flex justify-between border-t border-blue-950/80 pt-1.5 text-sm font-bold">
+                            <span class="text-slate-300">Sisa Tagihan:</span>
+                            <span class="text-emerald-400" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(paymentRemaining)"></span>
+                        </div>
+                    </div>
+
+                    <label class="block text-xs font-semibold text-slate-300">
+                        <span>Metode Pembayaran</span>
+                        <select name="bank_account_id" x-on:change="paymentIsCash = $event.target.selectedOptions[0].dataset.cash === '1'" class="mt-1.5 w-full rounded-xl border border-blue-900 bg-slate-950 px-3 py-2 text-xs text-white focus:border-indigo-500">
+                            @foreach($bankAccounts as $account)
+                                <option value="{{ $account->id }}" data-cash="{{ $account->name === 'Tunai' ? '1' : '0' }}">{{ $account->name === 'Tunai' ? 'Tunai' : str_replace('Bank ', '', $account->name) }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    <label x-cloak x-show="paymentIsCash" class="block text-xs font-semibold text-slate-300">
+                        <span>Nilai Tunai (Rp)</span>
+                        <input type="number" step="any" min="1" name="paid_amount" :value="paymentRemaining" x-bind:disabled="!paymentIsCash" x-bind:required="paymentIsCash" class="mt-1.5 w-full rounded-xl border border-blue-900 bg-slate-950 px-3 py-2 text-xs text-white font-semibold focus:border-indigo-500">
+                    </label>
+
+                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-blue-950">
+                        <button type="button" x-on:click="$dispatch('close-modal', 'pay-invoice-modal')" class="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition">
+                            Batal
+                        </button>
+                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-lg hover:bg-emerald-500 transition">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Selesaikan Invoice
+                        </button>
+                    </div>
+                </form>
+            </x-modal>
+
             <div>{{ $invoices->links() }}</div>
         </div>
 
@@ -400,6 +506,15 @@
                         <h4 class="text-sm font-bold text-white">Buku Piutang Dagang (Customer Receivables)</h4>
                         <p class="text-xs text-slate-400">Daftar seluruh tagihan customer yang belum lunas</p>
                     </div>
+                    <form method="GET" class="flex items-center gap-2">
+                        <input type="hidden" name="tab" value="piutang">
+                        <label for="receivable_type" class="text-xs font-semibold text-slate-300">Sumber</label>
+                        <select id="receivable_type" name="receivable_type" onchange="this.form.submit()" class="rounded-xl border border-blue-900 bg-slate-950 px-3 py-2 text-xs text-white">
+                            <option value="all" @selected($receivableType === 'all')>Semua Transaksi</option>
+                            <option value="online" @selected($receivableType === 'online')>Online</option>
+                            <option value="offline" @selected($receivableType === 'offline')>Offline / Open Bill</option>
+                        </select>
+                    </form>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -408,6 +523,7 @@
                             <tr>
                                 <th class="px-4 py-3.5 text-left">No.</th>
                                 <th class="px-4 py-3.5 text-left">No. Dokumen</th>
+                                <th class="px-4 py-3.5 text-left">Jenis Transaksi</th>
                                 <th class="px-4 py-3.5 text-left">Customer</th>
                                 <th class="px-4 py-3.5 text-right">Total Invoice</th>
                                 <th class="px-4 py-3.5 text-right">Sudah Dibayar</th>
@@ -421,20 +537,25 @@
                                     <td class="px-4 py-3.5 text-slate-400">{{ $receivables->firstItem() + $loop->index }}</td>
                                     <td class="px-4 py-3.5 font-bold text-white">
                                         <a href="{{ route('sales.show', $rec) }}" class="text-blue-300 hover:underline">{{ $rec->number }}</a>
+                                        @if($rec->document_type === 'pos')
+                                            <small class="mt-1 block text-xs font-medium text-amber-400">Bill: {{ $rec->bill_name ?: 'Tanpa nama bill' }}</small>
+                                        @endif
                                     </td>
+                                    <td class="px-4 py-3.5"><span class="inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold {{ $rec->document_type === 'pos' ? 'border-amber-700/50 bg-amber-950/50 text-amber-300' : 'border-blue-700/50 bg-blue-950/60 text-blue-300' }}">{{ $rec->document_type === 'pos' ? 'Offline / Open Bill' : 'Online' }}</span></td>
                                     <td class="px-4 py-3.5 font-medium text-white">{{ $rec->customer?->name ?? 'Pelanggan Umum' }}</td>
                                     <td class="px-4 py-3.5 text-right text-slate-300">Rp {{ number_format((float) $rec->total, 0, ',', '.') }}</td>
                                     <td class="px-4 py-3.5 text-right text-emerald-400">Rp {{ number_format((float) $rec->paid_amount, 0, ',', '.') }}</td>
                                     <td class="px-4 py-3.5 text-right font-extrabold text-rose-400">Rp {{ number_format($rec->outstandingBalance(), 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3.5 text-center">
-                                        <a href="{{ route('sales.show', $rec) }}" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition">
-                                            Bayar / Pelunasan
+                                    <td class="min-w-[11rem] px-4 py-3.5 text-center">
+                                        <a href="{{ route('sales.show', $rec) }}" class="inline-flex min-w-[9.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-emerald-400/30 bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-emerald-500 hover:shadow-emerald-900/30">
+                                            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2m4-3h-8m0 0l3-3m-3 3l3 3"/></svg>
+                                            Bayar Tagihan
                                         </a>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="py-12 text-center text-slate-400">Semua piutang telah lunas! Tidak ada tagihan tertunggak.</td>
+                                    <td colspan="8" class="py-12 text-center text-slate-400">Semua piutang telah lunas! Tidak ada tagihan tertunggak.</td>
                                 </tr>
                             @endforelse
                         </tbody>

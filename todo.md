@@ -12,6 +12,8 @@ Dokumen ini menjadi acuan alur fitur yang telah diubah serta pekerjaan lanjutan.
 | POS Kasir | Selesai | Customer opsional dan pembayaran terhubung ke akun Kas & Bank. |
 | Daftar Produk | Selesai | Menggunakan tabel dan pagination agar halaman tidak terlalu panjang. |
 | Sidebar | Selesai | Urutan dan menu disederhanakan sesuai kebutuhan operasional. |
+| Kontak Customer & Supplier | Selesai | Form seragam seperti produk, toolbar tambah pada daftar, dan pagination 5/10/25. |
+| Penyelesaian Invoice Online | Selesai | Quotation/PO penjualan online dapat diselesaikan langsung di Tab Invoice & Detail Transaksi. |
 
 ## 1. Alur Daftar Pembelian
 
@@ -135,7 +137,7 @@ Menjadikan modul lama “Pembelian Kebutuhan” sebagai pusat pembelian di luar 
 
 ### Status implementasi
 
-- [x] Memindahkan POS Kasir ke bagian atas setelah Dashboard.
+- [x] Menempatkan POS Kasir di atas Dashboard dan memindahkan Manajemen Role ke posisi paling bawah.
 - [x] Menghapus menu **Retur** dari sidebar.
 - [x] Menghapus menu **Laporan ERP** dari sidebar.
 - [x] Menghapus menu **Pembelian Aset** dari sidebar.
@@ -226,6 +228,8 @@ Menjadikan modul lama “Pembelian Kebutuhan” sebagai pusat pembelian di luar 
 - [x] Menampilkan Total Penjualan, Pembayaran Diterima, Total Transaksi, dan Produk Terjual.
 - [x] Tidak menampilkan kartu atau ringkasan Open Bill pada dashboard.
 - [x] Menambahkan grafik omzet dan transaksi berdasarkan periode terpilih.
+- [x] Menyediakan pilihan tampilan Grafik Garis (Line Chart) dan Grafik Batang (Bar Chart) yang dapat beralih secara dinamis.
+- [x] Grafik garis dilengkapi kurva halus, gradien area, grid horizontal, indikator hover vertikal, filter metrik (Semua / Omzet / Transaksi), serta kartu ringkasan perubahan penjualan per jam (Harian), per hari (Bulanan), atau per bulan (Tahunan).
 - [x] Menambahkan tabel transaksi selesai terbaru pada periode terpilih.
 - [x] Mengecualikan quotation, transaksi belum selesai, dan transaksi refund dari perhitungan omzet dashboard.
 
@@ -242,12 +246,12 @@ Menjadikan modul lama “Pembelian Kebutuhan” sebagai pusat pembelian di luar 
 - [x] Memperluas tema terang ke seluruh panel POS, toolbar, kartu produk, dropdown, status, dan komponen lama yang memakai warna gelap khusus.
 - [x] Meningkatkan kontras seluruh tulisan pada tema terang dan menebalkan outline kartu agar batas setiap bagian lebih jelas.
 
-## 12. Key Penghapusan Quotation
+## 12. Key Otorisasi Quotation dan Refund
 
 ### Keputusan keamanan
 
 - Quotation hanya dapat dihapus saat status masih Open.
-- Penghapusan wajib menggunakan key yang dibuat oleh Super Admin.
+- Penghapusan quotation dan refund offline wajib menggunakan key yang dibuat oleh Super Admin.
 - Key disimpan sebagai hash dan nilai aslinya hanya ditampilkan satu kali setelah dibuat.
 - Generate key baru langsung menonaktifkan key sebelumnya.
 
@@ -273,16 +277,74 @@ Menjadikan modul lama “Pembelian Kebutuhan” sebagai pusat pembelian di luar 
 - [x] Penjualan Offline tidak menyediakan fitur hapus.
 - [x] Menyediakan tombol Refund untuk Penjualan Offline berstatus Completed.
 - [x] Refund Penjualan Offline meminta alasan serta mengembalikan stok FIFO dan membalik mutasi pembayaran Kas/Bank.
+- [x] Refund Penjualan Offline wajib memasukkan key otorisasi Super Admin yang valid.
 - [x] Open Bill offline tidak dapat dihapus atau direfund sebelum transaksi diselesaikan.
 
 ### Alur pengguna
 
 1. Super Admin membuka dropdown profil pada header.
-2. Super Admin membuka dropdown profil, menekan **Generate Key Quotation**, lalu menyimpan key yang ditampilkan satu kali di dropdown.
+2. Super Admin menekan **Generate Key Otorisasi**, lalu menyimpan key yang ditampilkan di dropdown.
 3. User berwenang membuka detail quotation berstatus Open.
 4. User memasukkan key dari Super Admin pada bagian Hapus Quotation.
 5. Sistem mencocokkan key dengan hash yang tersimpan.
 6. Quotation hanya dihapus jika role, status, jenis dokumen, dan key semuanya valid.
+7. Untuk refund Penjualan Offline, user berwenang memasukkan alasan dan key otorisasi yang sama.
+8. Refund hanya diproses setelah key valid, lalu stok FIFO serta mutasi Kas/Bank dikembalikan.
+
+## 13. Kontak Customer dan Supplier
+ 
+### Status implementasi
+ 
+- [x] Mempertahankan menu dropdown Kontak di sidebar tetap bersih dan sederhana (hanya tautan Customer dan Supplier).
+- [x] Tombol tambah kontak disediakan melalui toolbar daftar (**Tambah Customer** dan **Tambah Supplier**) pada halaman masing-masing.
+- [x] Menyeragamkan layout dan styling form Tambah/Edit Kontak (`contacts/form.blade.php`) agar identik dengan form Produk (`products/form.blade.php`), lengkap dengan header slot, tombol kembali, deskripsi form, card grid, label bintang merah, dan tombol aksi berikon.
+- [x] Menambahkan pilihan pagination `5, 10, 25` dengan default 5 data per halaman pada daftar Kontak (`contacts/index.blade.php`) dan `ContactController`.
+- [x] Memperluas pencarian daftar kontak agar mendukung pencarian berdasarkan nama, email, dan nomor telepon.
+- [x] Memastikan pengalihan setelah tambah, edit, atau hapus kontak tetap mempertahankan parameter `type` agar user kembali ke tab yang sesuai (Customer atau Supplier).
+ 
+## 14. Penyelesaian Invoice Penjualan Online (Quotation / PO)
+
+### Keputusan alur
+
+- Transaksi penjualan online yang dibuat dari POS Online (`quotation` dan `order`) otomatis masuk ke tab **Quotation/PO** serta memiliki dokumen tagihan di tab **Invoice**.
+- Transaksi online yang belum lunas atau belum berstatus `completed` dapat diselesaikan langsung melalui tombol **Selesaikan** di tab **Invoice** atau melalui form pembayaran di halaman detail transaksi.
+- Penyelesaian invoice memotong stok FIFO (hanya untuk kuantitas item yang belum pernah dikirim melalui Delivery Order), mencatat `paid_amount`, mengubah status menjadi `completed`, dan membuat transaksi kredit pada akun Kas & Bank yang dipilih.
+
+### Status implementasi
+
+- [x] Memperbarui `CompleteSalePayment` agar mendukung pelunasan/penyelesaian invoice tipe `quotation` dan `order` di samping transaksi POS.
+- [x] Memastikan pemotongan stok FIFO tidak berulang jika sebagian/seluruh item transaksi sudah dikirim melalui Delivery Order (`$unconsumed = quantity - deliveredQuantity()`).
+- [x] Menambahkan role `finance` pada otorisasi form request pembayaran `PaySaleRequest`.
+- [x] Menangani redirect kembali ke tab Invoice (`sales.index?tab=invoice`) setelah invoice diselesaikan dari modal.
+- [x] Melewatkan daftar akun Kas & Bank ke `SaleController@index` untuk pilihan rekening pelunasan invoice.
+- [x] Menambahkan tombol **Selesaikan** pada baris invoice yang belum selesai/lunas di Tab Invoice (`sales.index`).
+- [x] Menambahkan modal interaktif `pay-invoice-modal` lengkap dengan rincian total tagihan, sudah dibayar, sisa tagihan, pilihan metode bayar, rekening Kas & Bank tujuan, dan input nominal pelunasan.
+- [x] Menampilkan form penyelesaian invoice pada detail transaksi (`sales.show`) untuk transaksi online yang belum berstatus `completed`.
+- [x] Mengeluarkan transaksi lunas, `cancelled`, atau `refunded` dari tab dan ringkasan Piutang; status pengiriman `completed` tidak dianggap lunas tanpa nilai `paid_amount` yang cukup.
+- [x] Menyamakan query tabel Piutang, total sisa piutang, dan jumlah invoice belum lunas agar memakai kriteria yang sama.
+- [x] Menampilkan status Lunas/Belum Lunas pada tab Quotation/PO tanpa menyediakan tombol atau pilihan pembayaran.
+- [x] Memusatkan proses pelunasan hanya melalui tab Invoice dan Piutang.
+- [x] Mempertahankan status PO berdasarkan progres pengiriman, sedangkan status pembayaran ditentukan dari `paid_amount`.
+- [x] Mengizinkan PO yang pengirimannya sudah selesai tetapi belum lunas untuk tetap diproses pembayarannya.
+- [x] Mencegah stok FIFO terpotong dua kali ketika PO dibayar sebelum Delivery Order dibuat.
+- [x] Memasukkan PO baru secara otomatis ke tab Delivery Order sebagai pesanan yang menunggu pengiriman.
+- [x] Menampilkan progres pengiriman, status pembayaran, dan tombol Buat Delivery Order pada daftar PO menunggu pengiriman.
+- [x] Menyederhanakan pembayaran Invoice dan Piutang menjadi pilihan Tunai, BCA, BNI, atau Mandiri tanpa pilihan rekening tujuan terpisah.
+- [x] Menghubungkan pilihan metode pembayaran langsung ke akun Kas & Bank yang sesuai.
+- [x] Menampilkan dan mewajibkan input nilai pembayaran hanya ketika metode Tunai dipilih; pembayaran bank otomatis memakai sisa tagihan.
+- [x] Merapikan kolom Aksi Piutang dengan tombol pembayaran berikon, satu baris, lebar konsisten, dan efek interaktif.
+- [x] Menambahkan filter sumber Piutang untuk Semua, Transaksi Online, dan Offline/Open Bill.
+- [x] Menampilkan label sumber transaksi pada setiap baris Piutang.
+- [x] Menampilkan nama meja atau nama bill pada piutang Offline sebagai pembeda transaksi kasir.
+
+### Alur pengguna
+
+1. User membuat Quotation atau Purchase Order (PO) melalui POS Online di Daftar Penjualan.
+2. Dokumen tercatat di tab **Quotation/PO** dan tagihannya tercatat di tab **Invoice**.
+3. Pada tab **Invoice**, invoice yang belum lunas menampilkan status tagihan ("Belum Bayar" atau "Sebagian") beserta tombol **Selesaikan**.
+4. User mengklik tombol **Selesaikan**, modal dialog muncul menampilkan sisa tagihan.
+5. User memilih metode pembayaran dan rekening Kas & Bank penerima, lalu mengonfirmasi pembayaran.
+6. Sistem memotong stok produk secara FIFO untuk sisa kuantitas yang belum dikirim, mencatat pembayaran, membukukan mutasi kredit ke Kas & Bank, dan memperbarui status invoice menjadi **Completed / Lunas**.
 
 ## Aturan Pengerjaan Berikutnya
 
@@ -291,3 +353,6 @@ Menjadikan modul lama “Pembelian Kebutuhan” sebagai pusat pembelian di luar 
 - Route atau data tidak dihapus hanya karena menu sidebar disembunyikan.
 - Pengujian otomatis tidak dijalankan kecuali user memintanya secara langsung.
 - Setiap perubahan alur berikutnya harus diperbarui pada dokumen ini agar tetap menjadi sumber rencana bersama.
+- [x] Menghapus fitur Coupon beserta input kode dan perhitungan diskon dari tampilan POS.
+- [x] Mengurutkan katalog produk secara natural berdasarkan abjad dan angka pada nama produk.
+- [x] Mengubah indikator mode POS menjadi tombol untuk berpindah langsung antara POS Offline dan POS Online.

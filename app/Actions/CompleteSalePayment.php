@@ -17,35 +17,61 @@ class CompleteSalePayment
         return DB::transaction(function () use ($sale, $payment): Sale {
             $sale = Sale::query()->lockForUpdate()->findOrFail($sale->id);
 
-            if ($sale->document_type !== 'pos' || $sale->status !== 'open') {
-                throw ValidationException::withMessages(['sale' => 'Bill ini tidak dapat dibayar.']);
+            if (in_array($sale->status, ['cancelled', 'refunded'], true) || (float) $sale->paid_amount >= (float) $sale->total) {
+                throw ValidationException::withMessages(['sale' => 'Invoice transaksi ini sudah lunas atau selesai.']);
             }
 
             $bankAccount = BankAccount::query()->findOrFail($payment['bank_account_id']);
-            $paymentMethod = Str::startsWith($bankAccount->name, ['Kas', 'Tunai', 'Cash']) ? 'cash' : 'bank_transfer';
-            $paidAmount = $paymentMethod === 'cash' ? (float) ($payment['paid_amount'] ?? 0) : (float) $sale->total;
-            if ($paidAmount < (float) $sale->total) {
-                throw ValidationException::withMessages(['paid_amount' => 'Jumlah pembayaran kurang dari total transaksi.']);
+            $isCashAccount = Str::startsWith($bankAccount->name, ['Kas', 'Tunai', 'Cash']);
+            $paymentMethod = $payment['payment_method'] ?? ($isCashAccount ? 'cash' : 'bank_transfer');
+            $remaining = max(0, (float) $sale->total - (float) $sale->paid_amount);
+
+            if ($sale->document_type === 'pos') {
+                $paidAmount = $paymentMethod === 'cash' ? (float) ($payment['paid_amount'] ?? 0) : (float) $sale->total;
+                if ($paidAmount < (float) $sale->total) {
+                    throw ValidationException::withMessages(['paid_amount' => 'Jumlah pembayaran kurang dari total transaksi.']);
+                }
+                $appliedPayment = (float) $sale->total;
+            } else {
+                $paidAmount = $isCashAccount ? (float) ($payment['paid_amount'] ?? 0) : $remaining;
+
+                if ($paidAmount <= 0) {
+                    throw ValidationException::withMessages(['paid_amount' => 'Nominal pembayaran harus lebih dari 0.']);
+                }
+
+                if ($paidAmount < $remaining) {
+                    throw ValidationException::withMessages(['paid_amount' => 'Nominal pelunasan harus sama dengan atau lebih besar dari sisa tagihan.']);
+                }
+
+                $appliedPayment = $remaining;
             }
 
-            $sale->load('items');
+            $sale->load('items.deliveryOrderItems');
             foreach ($sale->items as $saleItem) {
-                $this->consumeInventoryFifo->handle($saleItem, (float) $saleItem->quantity);
+                $alreadyDelivered = (float) $saleItem->deliveryOrderItems->sum('quantity');
+                $unconsumed = (float) $saleItem->quantity - $alreadyDelivered;
+
+                if ($unconsumed > 0.0001) {
+                    $this->consumeInventoryFifo->handle($saleItem, $unconsumed);
+                }
             }
+
+            $newPaidTotal = min((float) $sale->total, (float) $sale->paid_amount + $appliedPayment);
 
             $sale->update([
-                'status' => 'completed',
-                'paid_amount' => $sale->total,
+                'status' => $sale->document_type === 'order' ? $sale->status : 'completed',
+                'paid_amount' => $newPaidTotal,
                 'payment_method' => $paymentMethod,
                 'bank_account_id' => $bankAccount->id,
             ]);
+
             $sale->bankTransactions()->create([
                 'bank_account_id' => $bankAccount->id,
                 'transaction_at' => now(),
                 'type' => 'credit',
                 'payment_method' => $paymentMethod,
-                'description' => sprintf('Pembayaran penjualan %s', $sale->number),
-                'amount' => $sale->total,
+                'description' => sprintf('Pembayaran invoice %s (%s)', $sale->number, ucfirst($sale->document_type)),
+                'amount' => $appliedPayment,
             ]);
 
             return $sale->refresh();

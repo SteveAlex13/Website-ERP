@@ -46,7 +46,7 @@
                                         <a href='{{ route('profile.edit') }}' class='block rounded-lg px-4 py-3 hover:bg-slate-800'>Pengaturan Profil</a>
                                         @if(auth()->user()->role === 'superadmin')
                                             <div class='border-t border-slate-800 py-1'>
-                                                <button type='button' x-on:click="profileOpen = false; $dispatch('open-modal', 'generate-quotation-key')" class='w-full rounded-lg px-4 py-3 text-left text-slate-200 transition hover:bg-slate-800'>Generate Key Quotation</button>
+                                                <button type='button' x-on:click="profileOpen = false; $dispatch('open-modal', 'generate-quotation-key')" class='w-full rounded-lg px-4 py-3 text-left text-slate-200 transition hover:bg-slate-800'>Generate Key Otorisasi</button>
                                                 <button type='button' x-cloak x-show='keyAvailable' x-on:click="profileOpen = false; $dispatch('open-modal', 'quotation-key-result')" class='w-full rounded-lg px-4 py-3 text-left text-amber-300 transition hover:bg-slate-800'>Tampilkan Key</button>
                                             </div>
                                         @endif
@@ -56,7 +56,7 @@
                                     @if(auth()->user()->role === 'superadmin')
                                         <x-modal name='generate-quotation-key' maxWidth='md' focusable>
                                             <div class='bg-slate-900 p-6 text-white'>
-                                                <h3 class='text-lg font-bold'>Generate Key Quotation?</h3>
+                                                <h3 class='text-lg font-bold'>Generate Key Otorisasi?</h3>
                                                 <p class='mt-2 text-sm text-slate-400'>Key lama akan langsung tidak berlaku setelah key baru dibuat.</p>
                                                 <div class='mt-6 flex justify-end gap-3'>
                                                     <button type='button' x-on:click="$dispatch('close-modal', 'generate-quotation-key')" class='rounded-lg px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800'>Batal</button>
@@ -67,7 +67,7 @@
 
                                         <x-modal name='quotation-key-result' :show="session()->has('quotation_delete_key')" maxWidth='md' focusable>
                                             <div class='bg-slate-900 p-6 text-white'>
-                                                <h3 class='text-lg font-bold'>Key Penghapusan Quotation</h3>
+                                                <h3 class='text-lg font-bold'>Key Otorisasi Transaksi</h3>
                                                 <p class='mt-2 text-sm text-amber-300'>Key tersedia selama 5 menit. Simpan di tempat yang aman.</p>
                                                 <input type='text' readonly value='{{ session('quotation_delete_key') }}' class='mt-5 w-full rounded-lg border-slate-700 bg-slate-950 px-4 py-3 font-mono text-sm text-white'>
                                                 <div class='mt-6 flex justify-end'><button type='button' x-on:click="$dispatch('close-modal', 'quotation-key-result')" class='rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-600'>Tutup</button></div>

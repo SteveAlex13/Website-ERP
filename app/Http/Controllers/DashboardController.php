@@ -7,6 +7,7 @@ use App\Models\SaleItem;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -50,7 +51,7 @@ class DashboardController extends Controller
                 'transactions' => (int) ($result?->transactions ?? 0),
                 'revenue' => (float) ($result?->revenue ?? 0),
             ];
-        });
+        })->values();
 
         return view('dashboard', [
             'period' => $period,
@@ -79,16 +80,20 @@ class DashboardController extends Controller
      */
     private function periodConfiguration(string $period, array $filters): array
     {
+        $isSqlite = DB::connection()->getDriverName() === 'sqlite';
+
         if ($period === 'monthly') {
             $date = CarbonImmutable::createFromFormat('!Y-m', $filters['month'] ?? now()->format('Y-m'));
+            $bucketExpr = $isSqlite ? "CAST(strftime('%d', date) AS INTEGER)" : 'DAY(date)';
 
-            return [$date->startOfMonth(), $date->endOfMonth(), 'DAY(date)', array_combine(range(1, $date->daysInMonth), range(1, $date->daysInMonth))];
+            return [$date->startOfMonth(), $date->endOfMonth(), $bucketExpr, array_combine(range(1, $date->daysInMonth), range(1, $date->daysInMonth))];
         }
 
         if ($period === 'yearly') {
             $date = CarbonImmutable::create((int) ($filters['year'] ?? now()->year), 1, 1);
+            $bucketExpr = $isSqlite ? "CAST(strftime('%m', date) AS INTEGER)" : 'MONTH(date)';
 
-            return [$date->startOfYear(), $date->endOfYear(), 'MONTH(date)', [1 => 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']];
+            return [$date->startOfYear(), $date->endOfYear(), $bucketExpr, [1 => 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']];
         }
 
         $date = CarbonImmutable::createFromFormat('!Y-m-d', $filters['date'] ?? now()->toDateString());
@@ -98,7 +103,9 @@ class DashboardController extends Controller
             $labels[$hour] = str_pad((string) $hour, 2, '0', STR_PAD_LEFT);
         }
 
-        return [$date->startOfDay(), $date->endOfDay(), 'HOUR(created_at)', $labels];
+        $bucketExpr = $isSqlite ? "CAST(strftime('%H', created_at) AS INTEGER)" : 'HOUR(created_at)';
+
+        return [$date->startOfDay(), $date->endOfDay(), $bucketExpr, $labels];
     }
 
     private function periodLabel(string $period, CarbonImmutable $date): string

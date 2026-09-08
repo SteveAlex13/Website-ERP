@@ -2,7 +2,6 @@
 <div class='border-b border-blue-950 p-5'>
     <form method='GET' class='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
         @if(request()->filled('type'))<input type='hidden' name='type' value='{{ request('type') }}'>@endif
-        @if(request()->filled('type'))<input type='hidden' name='type' value='{{ request('type') }}'>@endif
         <label class='flex items-center gap-3 text-sm text-blue-200'>Tampilkan
             <select name='per_page' onchange='this.form.submit()' class='rounded-xl border-blue-900 bg-slate-950 text-sm text-white'>
                 @foreach($perPageOptions as $size)<option value='{{ $size }}' @selected(request()->integer('per_page', $defaultPerPage) === $size)>{{ $size }}</option>@endforeach

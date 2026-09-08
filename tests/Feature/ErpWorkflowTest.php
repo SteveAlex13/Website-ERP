@@ -200,6 +200,47 @@ class ErpWorkflowTest extends TestCase
             ->assertOk()->assertSee('Supplier Khusus')->assertDontSee('Customer Khusus');
     }
 
+    public function test_contact_create_page_and_store_redirects_with_type(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->get(route('contacts.create', ['type' => 'customer']))
+            ->assertOk()
+            ->assertSee('Tambah Customer Baru')
+            ->assertSee('Form Registrasi Customer Baru');
+
+        $this->actingAs($admin)
+            ->get(route('contacts.create', ['type' => 'supplier']))
+            ->assertOk()
+            ->assertSee('Tambah Supplier Baru')
+            ->assertSee('Form Registrasi Supplier Baru');
+
+        $response = $this->actingAs($admin)->post(route('contacts.store'), [
+            'type' => 'supplier',
+            'name' => 'PT Mitra Supplier Baru',
+            'phone' => '08123456789',
+            'email' => 'supplier@mitra.test',
+            'address' => 'Jl. Industri No. 10',
+        ]);
+
+        $response->assertRedirect(route('contacts.index', ['type' => 'supplier']));
+        $this->assertDatabaseHas('contacts', [
+            'type' => 'supplier',
+            'name' => 'PT Mitra Supplier Baru',
+        ]);
+    }
+
+    public function test_contact_pagination_supports_configured_page_sizes(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Contact::factory()->count(12)->create(['type' => 'customer']);
+
+        $response = $this->actingAs($admin)->get(route('contacts.index', ['type' => 'customer', 'per_page' => 5]));
+        $response->assertOk();
+        $this->assertCount(5, $response->viewData('contacts'));
+    }
+
     public function test_sales_role_is_forbidden_from_creating_delivery_order(): void
     {
         $salesUser = User::factory()->create(['role' => 'sales']);

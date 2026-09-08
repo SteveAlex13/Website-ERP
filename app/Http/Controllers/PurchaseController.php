@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\CreateStockIn;
 use App\Http\Requests\StorePurchaseRequest;
 use App\Models\Contact;
+use App\Models\InventoryBatch;
 use App\Models\Product;
 use App\Models\Purchase;
 use Illuminate\Contracts\View\View;
@@ -24,7 +25,7 @@ class PurchaseController extends Controller
             ->when(request('search'), fn ($query, $search) => $query->where('number', 'like', '%'.$search.'%'))
             ->latest()->paginate($perPage)->withQueryString();
 
-        $stockInHistory = \App\Models\InventoryBatch::query()
+        $stockInHistory = InventoryBatch::query()
             ->with(['product:id,name,sku,unit', 'supplier:id,name', 'purchaseItem.purchase:id,number'])
             ->latest('received_at')
             ->latest('id')

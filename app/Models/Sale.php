@@ -63,6 +63,7 @@ class Sale extends Model
         }
 
         $deliveredQty = (float) $this->items->sum(fn ($item) => (float) $item->deliveredQuantity());
+
         return min(100, (int) round(($deliveredQty / $totalQty) * 100));
     }
 }

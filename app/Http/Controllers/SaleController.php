@@ -47,6 +47,14 @@ class SaleController extends Controller
             ->paginate($perPage, ['*'], 'do_page')
             ->withQueryString();
 
+        $pendingDeliverySales = Sale::query()
+            ->with(['customer:id,name', 'items.deliveryOrderItems'])
+            ->where('document_type', 'order')
+            ->whereIn('status', ['open', 'partial'])
+            ->latest('date')
+            ->paginate($perPage, ['*'], 'pending_do_page')
+            ->withQueryString();
+
         $invoices = Sale::query()
             ->with(['customer:id,name', 'bankAccount:id,name'])
             ->whereIn('document_type', ['quotation', 'order'])
@@ -61,8 +69,17 @@ class SaleController extends Controller
             ->paginate($perPage, ['*'], 'ret_page')
             ->withQueryString();
 
-        $receivables = Sale::query()
+        $outstandingReceivables = Sale::query()
             ->whereColumn('paid_amount', '<', 'total')
+            ->whereNotIn('status', ['cancelled', 'refunded']);
+
+        $receivableType = in_array(request('receivable_type'), ['online', 'offline'], true)
+            ? request('receivable_type')
+            : 'all';
+
+        $receivables = (clone $outstandingReceivables)
+            ->when($receivableType === 'online', fn ($query) => $query->whereIn('document_type', ['quotation', 'order']))
+            ->when($receivableType === 'offline', fn ($query) => $query->where('document_type', 'pos'))
             ->with('customer:id,name')
             ->latest('date')
             ->paginate($perPage, ['*'], 'rec_page')
@@ -70,24 +87,32 @@ class SaleController extends Controller
 
         $activePoCount = Sale::query()->where('document_type', 'order')->whereIn('status', ['open', 'partial'])->count();
         $partialDeliveryCount = Sale::query()->where('status', 'partial')->count();
-        $totalReceivable = (float) (Sale::query()->selectRaw('COALESCE(SUM(total - paid_amount), 0) as aggregate')->value('aggregate') ?? 0);
-        $unpaidInvoiceCount = Sale::query()->whereColumn('paid_amount', '<', 'total')->count();
+        $totalReceivable = (float) ((clone $outstandingReceivables)->selectRaw('COALESCE(SUM(total - paid_amount), 0) as aggregate')->value('aggregate') ?? 0);
+        $unpaidInvoiceCount = (clone $outstandingReceivables)->count();
         $totalSalesMonth = (float) Sale::query()->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()])->sum('total');
         $commissionEstimate = $totalSalesMonth * 0.02; // 2% estimasi komisi periode
+
+        $bankAccounts = BankAccount::query()
+            ->whereIn('name', ['Tunai', 'Bank BCA', 'Bank BNI', 'Bank Mandiri'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'account_number']);
 
         return view('sales.index', compact(
             'sales',
             'offlineSales',
             'deliveryOrders',
+            'pendingDeliverySales',
             'invoices',
             'salesReturns',
             'receivables',
+            'receivableType',
             'activePoCount',
             'partialDeliveryCount',
             'totalReceivable',
             'unpaidInvoiceCount',
             'totalSalesMonth',
-            'commissionEstimate'
+            'commissionEstimate',
+            'bankAccounts'
         ));
     }
 
@@ -109,8 +134,9 @@ class SaleController extends Controller
             'openBills' => Sale::query()->where('document_type', 'pos')->where('status', 'open')->with('customer:id,name')->latest()->limit(10)->get(['id', 'number', 'bill_name', 'customer_id', 'total', 'created_at']),
             'products' => Product::query()
                 ->where('stock', '>', 0)
-                ->orderBy('name')
-                ->get(['id', 'sku', 'name', 'unit', 'selling_price', 'stock']),
+                ->get(['id', 'sku', 'name', 'unit', 'selling_price', 'stock'])
+                ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+                ->values(),
         ]);
     }
 

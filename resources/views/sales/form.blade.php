@@ -8,9 +8,9 @@
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 Home
             </a>
-            <a href="{{ route('sales.create', $isOnline ? ['mode' => 'online'] : []) }}" class="flex items-center gap-1.5 rounded-lg bg-[#1e293b] px-4 py-2 text-indigo-400 shadow-inner border border-indigo-500/30">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                {{ $isOnline ? 'POS Online' : 'POS Offline' }}
+            <a href="{{ route('sales.create', $isOnline ? [] : ['mode' => 'online']) }}" class="flex items-center gap-1.5 rounded-lg bg-[#1e293b] px-4 py-2 text-indigo-400 shadow-inner border border-indigo-500/30">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h11m0 0l-3-3m3 3l-3 3M17 17H6m0 0l3 3m-3-3l3-3"/></svg>
+                {{ $isOnline ? 'Ganti ke POS Offline' : 'Ganti ke POS Online' }}
             </a>
             <a href="{{ route('sales.index') }}" class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-slate-400 transition hover:bg-[#1e293b] hover:text-white">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -61,25 +61,11 @@
         @unless($isOnline)<input type="hidden" name="document_type" value="pos">@endunless
         <input type="hidden" name="sales_user_id" value="{{ auth()->id() }}">
         <input type="hidden" name="discount_type" value="fixed">
-        <input type="hidden" name="discount_value" x-bind:value="discountValue">
+        <input type="hidden" name="discount_value" value="0">
 
         <!-- LEFT PANEL: CART & CHECKOUT -->
         <section class="flex flex-col justify-between rounded-xl border border-[#1e293b] bg-[#0f172a] shadow-xl overflow-hidden min-h-[680px]">
             
-            <!-- Coupon Header Bar -->
-            <div class="border-b border-[#1e293b] bg-[#111c38] p-3">
-                <div class="flex items-center gap-2">
-                    <button type="button" @click="toggleCouponModal()" class="flex items-center gap-1.5 rounded-lg bg-[#10b981] px-4 py-2 text-xs font-bold text-white shadow transition hover:bg-[#059669]">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                        Coupon
-                    </button>
-                    <input x-model="couponCode" @input="applyCoupon()" type="text" placeholder="Masukkan kode diskon/kupon..." class="flex-1 rounded-lg border border-[#1e293b] bg-[#0a0f1d] px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-indigo-500 focus:outline-none">
-                    <template x-if="discount > 0">
-                        <span class="rounded bg-emerald-950/80 px-2 py-1 text-xs font-semibold text-emerald-400 border border-emerald-600/40" x-text="'-' + rupiah(discountValue)"></span>
-                    </template>
-                </div>
-            </div>
-
             <!-- Table Header -->
             <div class="grid grid-cols-[1.5fr_1fr_1fr_30px] border-b border-[#1e293b] bg-[#0d1527] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                 <span>Product</span>
@@ -189,10 +175,6 @@
                             <span>Sub Total</span>
                             <span class="font-medium text-slate-200" x-text="rupiah(subtotal)"></span>
                         </div>
-                        <div class="flex justify-between text-slate-400">
-                            <span>Discount</span>
-                            <span class="font-medium text-slate-200" x-text="rupiah(discountValue)"></span>
-                        </div>
                         <div class="flex justify-between rounded bg-[#132247] px-2 py-1.5 text-sm font-bold text-white">
                             <span>Total</span>
                             <span x-text="rupiah(grandTotal)"></span>
@@ -298,8 +280,6 @@ function posKasir() {
         bankAccounts: bankAccounts,
         cart: [],
         search: '',
-        couponCode: '',
-        discount: 0,
         paid: 0,
         selectedBankAccount: defaultBankAccount ? String(defaultBankAccount.id) : '',
         paymentMethod: defaultBankAccount && (['Tunai', 'Cash'].includes(defaultBankAccount.name) || defaultBankAccount.name.startsWith('Kas')) ? 'cash' : 'bank_transfer',
@@ -328,17 +308,13 @@ function posKasir() {
             return this.cart.reduce((total, item) => total + (Number(item.price) * Number(item.quantity)), 0);
         },
 
-        get discountValue() {
-            return Math.min(Number(this.discount) || 0, this.subtotal);
-        },
-
         get taxAmount() {
             // Optional tax if needed, currently 0 for standard retail or toggleable
             return 0;
         },
 
         get grandTotal() {
-            return Math.max(0, this.subtotal - this.discountValue + this.taxAmount);
+            return Math.max(0, this.subtotal + this.taxAmount);
         },
 
         get effectivePaid() {
@@ -380,34 +356,7 @@ function posKasir() {
 
         clearCart() {
             this.cart = [];
-            this.discount = 0;
             this.paid = 0;
-            this.couponCode = '';
-        },
-
-        applyCoupon() {
-            var code = this.couponCode.trim().toUpperCase();
-            if (code === 'DISKON10') {
-                this.discount = this.subtotal * 0.10;
-            } else if (code === 'HEMAT50K') {
-                this.discount = 50000;
-            } else if (code === '') {
-                this.discount = 0;
-            }
-        },
-
-        toggleCouponModal() {
-            var code = prompt('Masukkan Kode Kupon atau Nominal Diskon (Rp):');
-            if (code) {
-                var num = Number(code);
-                if (!isNaN(num) && num > 0) {
-                    this.discount = num;
-                    this.couponCode = 'CUSTOM-RP' + num;
-                } else {
-                    this.couponCode = code;
-                    this.applyCoupon();
-                }
-            }
         },
 
         monogram(name) {

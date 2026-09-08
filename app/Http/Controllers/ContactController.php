@@ -14,9 +14,13 @@ class ContactController extends Controller
      */
     public function index(): View
     {
-        $perPage = in_array(request()->integer('per_page'), [10, 25, 50], true) ? request()->integer('per_page') : 10;
+        $perPage = in_array(request()->integer('per_page'), [5, 10, 25], true) ? request()->integer('per_page') : 5;
         $contacts = Contact::query()
-            ->when(request('search'), fn ($query, $search) => $query->where('name', 'like', '%'.$search.'%'))
+            ->when(request('search'), fn ($query, $search) => $query->where(fn ($query) => $query
+                ->where('name', 'like', '%'.$search.'%')
+                ->orWhere('email', 'like', '%'.$search.'%')
+                ->orWhere('phone', 'like', '%'.$search.'%')
+            ))
             ->when(request('type'), fn ($query, $type) => $query->where('type', $type))
             ->latest()->paginate($perPage)->withQueryString();
 
@@ -36,9 +40,9 @@ class ContactController extends Controller
      */
     public function store(StoreContactRequest $request): RedirectResponse
     {
-        Contact::create($request->validated());
+        $contact = Contact::create($request->validated());
 
-        return to_route('contacts.index')->with('success', 'Kontak berhasil ditambahkan.');
+        return to_route('contacts.index', ['type' => $contact->type])->with('success', ucfirst($contact->type).' berhasil ditambahkan.');
     }
 
     /**
@@ -64,7 +68,7 @@ class ContactController extends Controller
     {
         $contact->update($request->validated());
 
-        return to_route('contacts.index')->with('success', 'Kontak berhasil diperbarui.');
+        return to_route('contacts.index', ['type' => $contact->type])->with('success', ucfirst($contact->type).' berhasil diperbarui.');
     }
 
     /**
@@ -72,8 +76,9 @@ class ContactController extends Controller
      */
     public function destroy(Contact $contact): RedirectResponse
     {
+        $type = $contact->type;
         $contact->delete();
 
-        return to_route('contacts.index')->with('success', 'Kontak berhasil dihapus.');
+        return to_route('contacts.index', ['type' => $type])->with('success', ucfirst($type).' berhasil dihapus.');
     }
 }

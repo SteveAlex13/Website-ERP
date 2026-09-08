@@ -26,14 +26,20 @@ class CreateDeliveryOrder
             foreach ($items as $submittedItem) {
                 $saleItem = SaleItem::query()->lockForUpdate()->findOrFail($submittedItem['sale_item_id']);
                 $quantity = (float) $submittedItem['quantity'];
-                $remaining = (float) $saleItem->quantity - $saleItem->deliveredQuantity();
+                $alreadyDelivered = $saleItem->deliveredQuantity();
+                $remaining = (float) $saleItem->quantity - $alreadyDelivered;
 
                 if ($saleItem->sale_id !== $sale->id || $quantity <= 0 || $quantity > $remaining) {
                     throw ValidationException::withMessages(['items' => 'Jumlah kirim melebihi sisa pesanan atau stok tersedia.']);
                 }
 
                 $deliveryOrder->items()->create(['sale_item_id' => $saleItem->id, 'quantity' => $quantity]);
-                $this->consumeInventoryFifo->handle($saleItem, $quantity);
+                $alreadyConsumed = (float) $saleItem->inventoryAllocations()->sum('quantity');
+                $quantityToConsume = max(0, ($alreadyDelivered + $quantity) - $alreadyConsumed);
+
+                if ($quantityToConsume > 0.0001) {
+                    $this->consumeInventoryFifo->handle($saleItem, $quantityToConsume);
+                }
             }
 
             $sale->load('items.deliveryOrderItems');

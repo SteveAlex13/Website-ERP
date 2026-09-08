@@ -3,11 +3,8 @@
     <nav class='flex flex-1 flex-col gap-1 overflow-y-auto p-4 text-sm'>
         @php
             $role = auth()->user()->role;
-            $links = [['dashboard','Dashboard','Ringkasan']];
-            $links[] = ['sales.create','POS Kasir','Buka Transaksi Kasir'];
-            if ($role === 'superadmin') {
-                $links[] = ['user-roles.index','Manajemen Role','Akses Pengguna'];
-            }
+            $links = [['sales.create','POS Kasir','Buka Transaksi Kasir']];
+            $links[] = ['dashboard','Dashboard','Ringkasan'];
             $links[] = ['products-menu','Produk & Stok','Katalog & Stock In'];
             if (in_array($role,['superadmin','admin','purchasing','sales','finance'])) {
                 $links[] = ['contacts-menu','Kontak','Customer & Supplier'];
@@ -19,6 +16,9 @@
             if (in_array($role,['superadmin','admin','finance'])) {
                 $links[] = ['cash-expenses.index','Kas & Bank','Pengeluaran'];
                 $links[] = ['reports.daily-financial','Laporan','Harian, Bulanan & Tahunan'];
+            }
+            if ($role === 'superadmin') {
+                $links[] = ['user-roles.index','Manajemen Role','Akses Pengguna'];
             }
         @endphp
         @foreach($links as [$routeName,$label,$caption])
