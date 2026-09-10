@@ -4,7 +4,7 @@
 @if(session('success'))<div class='mb-5 rounded-xl border border-emerald-500/40 bg-emerald-950/60 p-4 text-sm text-emerald-200'>{{ session('success') }}</div>@endif
 @if($errors->any())<div class='mb-5 rounded-xl border border-red-500/40 bg-red-950/60 p-4 text-sm text-red-200'>{{ $errors->first() }}</div>@endif
 <section class='overflow-hidden rounded-2xl border border-blue-900 bg-slate-900'>
-<div class='flex flex-col justify-between gap-4 border-b border-blue-950 p-6 sm:flex-row sm:items-center'><div><p class='text-sm text-blue-300'>{{ $sale->number }}</p><h3 class='text-xl font-bold text-white'>{{ $sale->customer?->name ?? 'Pelanggan Umum' }}</h3><div class='mt-2 flex flex-wrap gap-2'><span class='rounded-full bg-blue-950 px-3 py-1 text-xs text-blue-200'>{{ ucfirst($sale->status) }}</span>@if($sale->payment_method)<span class='rounded-full bg-emerald-950 px-3 py-1 text-xs text-emerald-200'>{{ str_replace('_',' ',ucfirst($sale->payment_method)) }} · {{ $sale->bankAccount?->name }}</span>@endif</div></div><a href='{{ route('sales.invoice.print',$sale) }}' target='_blank' class='erp-btn-secondary'>Cetak Invoice</a></div>
+<div class='flex flex-col justify-between gap-4 border-b border-blue-950 p-6 sm:flex-row sm:items-center'><div><p class='text-sm text-blue-300'>{{ $sale->number }}</p><h3 class='text-xl font-bold text-white'>{{ $sale->customer?->name ?? 'Pelanggan Umum' }}</h3><div class='mt-2 flex flex-wrap gap-2'><span class='rounded-full bg-blue-950 px-3 py-1 text-xs text-blue-200'>{{ ucfirst($sale->status) }}</span>@if($sale->payment_method)<span class='rounded-full bg-emerald-950 px-3 py-1 text-xs text-emerald-200'>{{ str_replace('_',' ',ucfirst($sale->payment_method)) }} · {{ $sale->bankAccount?->name }}</span>@endif</div></div><a href='{{ route('sales.invoice.print',$sale) }}' data-print-invoice class='erp-btn-secondary'>Cetak Invoice</a></div>
 <div class='overflow-x-auto p-5'><table class='min-w-full text-sm'><thead><tr><th>Produk</th><th>Jumlah</th><th>Harga</th><th>Subtotal</th><th>Stok</th></tr></thead><tbody>@foreach($sale->items as $item)<tr><td>{{ $item->product->name }}</td><td>{{ $item->quantity }} {{ $item->product->unit }}</td><td>Rp {{ number_format((float)$item->price,0,',','.') }}</td><td>Rp {{ number_format((float)$item->subtotal,0,',','.') }}</td><td>{{ $item->product->stock }}</td></tr>@endforeach</tbody></table></div>
 <div class='flex justify-end border-t border-blue-950 p-5 text-xl font-bold text-white'>Total: Rp {{ number_format((float)$sale->total,0,',','.') }}</div>
 </section>
@@ -46,10 +46,15 @@
 <label x-cloak x-show="paymentIsCash" class="text-xs font-semibold text-slate-300">Nilai Tunai (Rp)
     <input type="number" step="any" min="1" name="paid_amount" value="{{ max(0, (float)$sale->total - (float)$sale->paid_amount) }}" x-bind:disabled="!paymentIsCash" x-bind:required="paymentIsCash" class="mt-1.5 w-full rounded-xl border border-blue-900 bg-slate-950 px-3 py-2 text-xs text-white font-semibold">
 </label>
-<button class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-bold text-white transition hover:bg-emerald-500 sm:col-span-2 shadow-lg">
-    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-    {{ $sale->document_type === 'pos' ? 'Bayar dan Selesaikan Transaksi' : 'Selesaikan Invoice & Catat Pembayaran' }}
-</button>
+<div class="flex flex-col-reverse gap-3 sm:col-span-2 sm:flex-row sm:justify-end">
+    <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('sales.index', ['tab' => 'receivables']) }}" class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800 px-5 py-3 font-bold text-slate-200 transition hover:bg-slate-700">
+        Kembali
+    </a>
+    <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-bold text-white shadow-lg transition hover:bg-emerald-500">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        {{ $sale->document_type === 'pos' ? 'Bayar dan Selesaikan Transaksi' : 'Selesaikan Invoice & Catat Pembayaran' }}
+    </button>
+</div>
 </form>
 @endif
 @if($sale->document_type === 'pos' && $sale->status === 'completed')

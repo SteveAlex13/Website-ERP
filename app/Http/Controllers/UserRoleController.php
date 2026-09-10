@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreManagedUserRequest;
 use App\Http\Requests\UpdateUserRoleRequest;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
@@ -30,5 +31,12 @@ class UserRoleController extends Controller
         $user->update($request->validated());
 
         return to_route('user-roles.index')->with('success', sprintf('Role %s berhasil diperbarui.', $user->name));
+    }
+
+    public function store(StoreManagedUserRequest $request): RedirectResponse
+    {
+        $user = User::create($request->validated());
+
+        return to_route('user-roles.index')->with('success', sprintf('Akun %s berhasil ditambahkan.', $user->name));
     }
 }

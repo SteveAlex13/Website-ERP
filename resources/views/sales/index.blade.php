@@ -138,7 +138,7 @@
                                             <a href="{{ route('sales.show', $sale) }}" class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-600 transition">
                                                 Detail
                                             </a>
-                                            <a href="{{ route('sales.invoice.print', $sale) }}" target="_blank" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition">
+                                            <a href="{{ route('sales.invoice.print', $sale) }}" data-print-invoice class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition">
                                                 Cetak
                                             </a>
                                             @can('delete', $sale)
@@ -195,7 +195,7 @@
                                     <td class="px-4 py-3.5 text-center">
                                         <div class="flex items-center justify-center gap-2">
                                             <a href="{{ route('sales.show', $sale) }}" class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-600">Detail</a>
-                                            <a href="{{ route('sales.invoice.print', $sale) }}" target="_blank" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700">Cetak</a>
+                                            <a href="{{ route('sales.invoice.print', $sale) }}" data-print-invoice class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700">Cetak</a>
                                             @if($sale->status === 'completed' && in_array(auth()->user()->role, ['superadmin', 'admin', 'cashier', 'finance'], true))
                                                 <button type="button" data-action="{{ route('sales.refund', $sale) }}" data-number="{{ $sale->number }}" x-on:click="refundAction = $event.currentTarget.dataset.action; refundNumber = $event.currentTarget.dataset.number; $dispatch('open-modal', 'refund-offline-sale')" class="rounded-lg bg-red-600/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600">Refund</button>
                                             @endif
@@ -374,7 +374,7 @@
                                             <a href="{{ route('sales.show', $inv) }}" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition">
                                                 Detail
                                             </a>
-                                            <a href="{{ route('sales.invoice.print', $inv) }}" target="_blank" class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-600 transition">
+                                            <a href="{{ route('sales.invoice.print', $inv) }}" data-print-invoice class="rounded-lg bg-indigo-600/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-600 transition">
                                                 Cetak
                                             </a>
                                         </div>
@@ -432,7 +432,7 @@
 
                     <div class="flex items-center justify-end gap-3 pt-3 border-t border-blue-950">
                         <button type="button" x-on:click="$dispatch('close-modal', 'pay-invoice-modal')" class="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition">
-                            Batal
+                            Kembali
                         </button>
                         <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-lg hover:bg-emerald-500 transition">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>

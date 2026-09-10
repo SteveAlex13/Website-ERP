@@ -204,7 +204,7 @@ class SaleController extends Controller
     public function printInvoice(Sale $sale): View
     {
         $this->authorize('view', $sale);
-        $sale->load(['customer', 'salesUser', 'items.product']);
+        $sale->load(['customer', 'salesUser', 'bankAccount', 'items.product']);
 
         return view('print.invoice', compact('sale'));
     }

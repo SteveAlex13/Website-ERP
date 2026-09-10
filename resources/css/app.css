@@ -507,3 +507,54 @@ html[data-theme='light'] main [class*='from-indigo-'][class*='text-white'],
 html[data-theme='light'] aside [class*='bg-indigo-'][class*='text-white'] {
     color: #ffffff !important;
 }
+
+html[data-theme='light'] body.landing-page {
+    background: #f5f9ff !important;
+    color: #172554 !important;
+}
+
+html[data-theme='light'] body.landing-page > header {
+    border-color: #bfdbfe !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    color: #172554 !important;
+    box-shadow: 0 8px 30px rgba(30, 64, 175, 0.08);
+}
+
+html[data-theme='light'] body.landing-page [class*='bg-slate-900'],
+html[data-theme='light'] body.landing-page [class*='bg-slate-950'] {
+    border-color: #bfdbfe !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html[data-theme='light'] body.landing-page [class*='border-blue-950'],
+html[data-theme='light'] body.landing-page [class*='border-blue-800'] {
+    border-color: #bfdbfe !important;
+}
+
+html[data-theme='light'] body.landing-page [class*='text-slate-300'],
+html[data-theme='light'] body.landing-page [class*='text-slate-400'] {
+    color: #475569 !important;
+}
+
+html[data-theme='light'] body.landing-page [class*='text-slate-500'] {
+    color: #64748b !important;
+}
+
+html[data-theme='light'] body.landing-page .landing-login-button {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+}
+
+html[data-theme='light'] body.landing-page .landing-primary-button,
+html[data-theme='light'] body.landing-page .landing-cta {
+    color: #ffffff !important;
+}
+
+html[data-theme='light'] body.landing-page .landing-cta p {
+    color: #dbeafe !important;
+}
+
+html[data-theme='light'] body.landing-page .landing-cta a {
+    color: #4338ca !important;
+}

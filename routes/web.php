@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:superadmin')->group(function () {
         Route::post('/profile/quotation-delete-key', [ProfileController::class, 'generateQuotationDeleteKey'])->name('profile.quotation-delete-key.generate');
         Route::get('user-roles', [UserRoleController::class, 'index'])->name('user-roles.index');
+        Route::post('user-roles', [UserRoleController::class, 'store'])->name('user-roles.store');
         Route::patch('user-roles/{user}', [UserRoleController::class, 'update'])->name('user-roles.update');
     });
     Route::resource('products', ProductController::class)->only(['index']);

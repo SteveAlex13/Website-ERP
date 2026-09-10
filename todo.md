@@ -356,3 +356,11 @@ Menjadikan modul lama “Pembelian Kebutuhan” sebagai pusat pembelian di luar 
 - [x] Menghapus fitur Coupon beserta input kode dan perhitungan diskon dari tampilan POS.
 - [x] Mengurutkan katalog produk secara natural berdasarkan abjad dan angka pada nama produk.
 - [x] Mengubah indikator mode POS menjadi tombol untuk berpindah langsung antara POS Offline dan POS Online.
+- [x] Memperbaiki cetak invoice transaksi non-tunai dengan memuat data rekening pembayaran dan menangani transaksi tanpa customer sebagai Pelanggan Umum.
+- [x] Membuat semua tombol cetak invoice membuka dialog print langsung tanpa tab baru dan merapikan desain invoice A4.
+- [x] Menambahkan tombol Kembali pada modal dan halaman pembayaran tagihan/piutang tanpa memproses pembayaran.
+- [x] Menambahkan pilihan visualisasi Line Chart, Bar Chart, dan Pie Chart pada grafik penjualan Dashboard.
+- [x] Menambahkan tombol dan form Tambah User/Akun pada Manajemen Role yang hanya dapat digunakan Superadmin.
+- [x] Mengganti halaman index bawaan Laravel dengan landing page Dagang ERP mengikuti struktur mockup/index.html.
+- [x] Menambahkan tema terang dan gelap yang konsisten beserta tombol pengubah tema pada landing page.
+- [x] Merapikan halaman login dengan desain responsif bertema biru-indigo serta dukungan mode terang dan gelap.

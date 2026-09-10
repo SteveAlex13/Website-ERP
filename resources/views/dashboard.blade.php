@@ -69,7 +69,7 @@
             </article>
         </section>
 
-        <!-- SECTION GRAFIK PENJUALAN: LINE CHART & BAR CHART -->
+        <!-- SECTION GRAFIK PENJUALAN: LINE, BAR, DAN PIE CHART -->
         <section x-data="salesDashboardChart({{ Js::from($chartData) }}, {{ (float) $maxRevenue }}, {{ (int) $maxTransactions }})" class="rounded-2xl border border-blue-900 bg-slate-900 p-5 shadow-xl">
             <!-- Header Grafik -->
             <div class="flex flex-wrap items-center justify-between gap-4 border-b border-blue-950/70 pb-4">
@@ -98,6 +98,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                             </svg>
                             <span>Batang (Bar)</span>
+                        </button>
+                        <button type="button" @click="setChartType('pie')" :class="chartType === 'pie' ? 'bg-indigo-600 text-white font-bold shadow' : 'text-slate-400 hover:text-white'" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9 9 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
+                            </svg>
+                            <span>Lingkaran (Pie)</span>
                         </button>
                     </div>
 
@@ -274,6 +280,44 @@
                     @endforeach
                 </div>
             </div>
+
+            <!-- TAMPILAN 3: GRAFIK LINGKARAN (PIE CHART) -->
+            <div x-cloak x-show="chartType === 'pie'" class="mt-5 grid gap-6 lg:grid-cols-[minmax(280px,0.8fr)_1.2fr] lg:items-center">
+                <div class="relative mx-auto grid h-72 w-72 place-items-center">
+                    <svg viewBox="0 0 120 120" class="h-full w-full -rotate-90 drop-shadow-xl">
+                        <circle cx="60" cy="60" r="48" fill="none" stroke="currentColor" stroke-width="18" class="text-slate-800"/>
+                        <template x-for="segment in pieSegments" :key="segment.label">
+                            <circle cx="60" cy="60" r="48" fill="none" stroke-width="18" stroke-linecap="butt" :stroke="segment.color" :stroke-dasharray="segment.dashArray" :stroke-dashoffset="segment.dashOffset" class="cursor-pointer transition-opacity hover:opacity-80"/>
+                        </template>
+                    </svg>
+                    <div class="absolute inset-0 grid place-content-center text-center">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" x-text="pieMetricLabel"></span>
+                        <strong class="mt-1 text-xl text-white" x-text="metric === 'transactions' ? totalPieValue + ' transaksi' : formatRupiah(totalPieValue)"></strong>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="mb-4">
+                        <h4 class="font-bold text-white">Distribusi <span x-text="pieMetricLabel"></span></h4>
+                        <p class="mt-1 text-xs text-slate-400">Enam periode terbesar ditampilkan terpisah; sisanya digabung sebagai Lainnya.</p>
+                    </div>
+                    <div x-show="pieSegments.length" class="grid gap-2 sm:grid-cols-2">
+                        <template x-for="segment in pieSegments" :key="'legend-' + segment.label">
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-blue-950 bg-slate-950/60 px-3 py-2.5">
+                                <div class="flex min-w-0 items-center gap-2">
+                                    <span class="h-3 w-3 shrink-0 rounded-full" :style="'background-color:' + segment.color"></span>
+                                    <span class="truncate text-xs font-semibold text-slate-300" x-text="segment.label"></span>
+                                </div>
+                                <div class="text-right">
+                                    <strong class="block text-xs text-white" x-text="segment.percentage.toFixed(1) + '%' "></strong>
+                                    <small class="text-[10px] text-slate-400" x-text="metric === 'transactions' ? segment.value + ' transaksi' : formatFullRupiah(segment.value)"></small>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="!pieSegments.length" class="rounded-xl border border-dashed border-blue-900 p-8 text-center text-sm text-slate-400">Belum ada data penjualan pada periode ini.</div>
+                </div>
+            </div>
         </section>
 
         <section class="overflow-hidden rounded-2xl border border-blue-900 bg-slate-900 shadow-xl">
@@ -398,6 +442,50 @@ function salesDashboardChart(rawChartData, maxRev, maxTrans) {
 
         get transactionAreaPath() {
             return this.buildAreaPath(this.transactionPoints);
+        },
+
+        get pieMetricLabel() {
+            return this.metric === 'transactions' ? 'Transaksi' : 'Omzet';
+        },
+
+        get pieData() {
+            var field = this.metric === 'transactions' ? 'transactions' : 'revenue';
+            var values = this.data
+                .map((point) => ({ label: point.label, value: Number(point[field]) || 0 }))
+                .filter((point) => point.value > 0)
+                .sort((first, second) => second.value - first.value);
+
+            if (values.length <= 6) return values;
+
+            var visible = values.slice(0, 6);
+            var otherValue = values.slice(6).reduce((total, point) => total + point.value, 0);
+
+            return [...visible, { label: 'Lainnya', value: otherValue }];
+        },
+
+        get totalPieValue() {
+            return this.pieData.reduce((total, point) => total + point.value, 0);
+        },
+
+        get pieSegments() {
+            var circumference = 301.593;
+            var colors = ['#6366f1', '#22d3ee', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#64748b'];
+            var offset = 0;
+
+            return this.pieData.map((point, index) => {
+                var percentage = this.totalPieValue > 0 ? (point.value / this.totalPieValue) * 100 : 0;
+                var length = (percentage / 100) * circumference;
+                var segment = {
+                    ...point,
+                    percentage: percentage,
+                    color: colors[index % colors.length],
+                    dashArray: length + ' ' + (circumference - length),
+                    dashOffset: -offset
+                };
+                offset += length;
+
+                return segment;
+            });
         },
 
         get activePoint() {
